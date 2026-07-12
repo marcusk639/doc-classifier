@@ -38,4 +38,14 @@ describe("loadProductConfig", () => {
       /Could not read product classification config/,
     );
   });
+
+  it("throws a clear error on malformed JSON syntax", () => {
+    const dir = mkdtempSync(join(tmpdir(), "doc-classifier-test-"));
+    const path = join(dir, "config.json");
+    writeFileSync(path, "{ this is not valid json");
+
+    expect(() => loadProductConfig(path)).toThrow(
+      /Invalid product classification config.*not valid JSON/,
+    );
+  });
 });

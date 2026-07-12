@@ -27,7 +27,17 @@ export function loadProductConfig(
     );
   }
 
-  const parsed = ProductClassificationConfigSchema.safeParse(JSON.parse(raw));
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch (cause) {
+    throw new Error(
+      `Invalid product classification config at ${configPath}: not valid JSON`,
+      { cause },
+    );
+  }
+
+  const parsed = ProductClassificationConfigSchema.safeParse(json);
   if (!parsed.success) {
     throw new Error(
       `Invalid product classification config at ${configPath}: ${parsed.error.message}`,
