@@ -4,9 +4,9 @@ const RAG_API_URL = process.env.RAG_API_URL ?? "http://localhost:3000";
 
 interface SearchDocumentsResponse {
   results: Array<{
-    chunkId: string;
     text: string;
     document: { title: string };
+    chunk: { id: string };
   }>;
 }
 
@@ -39,7 +39,7 @@ export async function retrieveContext(
 
   const body = (await response.json()) as SearchDocumentsResponse;
   return body.results.map((r) => ({
-    id: r.chunkId,
+    id: r.chunk.id,
     text: r.text,
     sourceTitle: r.document.title,
   }));

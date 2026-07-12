@@ -19,9 +19,9 @@ describe("retrieveContext", () => {
         json: async () => ({
           results: [
             {
-              chunkId: "chunk-1",
               text: "PTSD involves hypervigilance.",
               document: { title: "PTSD Guide" },
+              chunk: { id: "chunk-1" },
             },
           ],
         }),
