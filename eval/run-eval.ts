@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { classify } from "../src/classification/orchestrator.js";
-import { loadProductConfig } from "../src/config/product-config.js";
+import { loadProductConfigById } from "../src/config/product-config.js";
 import { computeEvalStats, type EvalOutcome } from "./eval-stats.js";
 
 interface GoldenCase {
@@ -17,8 +17,9 @@ async function runEval() {
   const outcomes: EvalOutcome[] = [];
 
   for (const testCase of goldenSet) {
-    const config = loadProductConfig(
-      `${process.env.PRODUCT_CONFIG_DIR ?? "./config"}/${testCase.productId}.json`,
+    const config = loadProductConfigById(
+      process.env.PRODUCT_CONFIG_DIR ?? "./config",
+      testCase.productId,
     );
     const result = await classify(testCase.documentText, config);
     outcomes.push({

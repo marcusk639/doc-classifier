@@ -12,7 +12,7 @@ describe("handleClassifyDocument", () => {
   });
 
   it("loads the product config and delegates to the classify orchestrator", async () => {
-    vi.mocked(configModule.loadProductConfig).mockReturnValue({
+    vi.mocked(configModule.loadProductConfigById).mockReturnValue({
       productId: "test",
       referenceSourceId: "test-source",
       classificationPrompt: "test",
@@ -52,11 +52,11 @@ describe("handleClassifyDocument", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(configModule.loadProductConfig).not.toHaveBeenCalled();
+    expect(configModule.loadProductConfigById).not.toHaveBeenCalled();
   });
 
-  it("returns a generic error and does not leak internal details when loadProductConfig throws", async () => {
-    vi.mocked(configModule.loadProductConfig).mockImplementationOnce(() => {
+  it("returns a generic error and does not leak internal details when loadProductConfigById throws", async () => {
+    vi.mocked(configModule.loadProductConfigById).mockImplementationOnce(() => {
       throw new Error(
         "Could not read product classification config at ./config/unknown.json",
       );
@@ -72,7 +72,7 @@ describe("handleClassifyDocument", () => {
   });
 
   it("returns a generic error and does not leak internal details when classify() throws", async () => {
-    vi.mocked(configModule.loadProductConfig).mockReturnValue({
+    vi.mocked(configModule.loadProductConfigById).mockReturnValue({
       productId: "test",
       referenceSourceId: "test-source",
       classificationPrompt: "test",

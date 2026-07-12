@@ -1,9 +1,10 @@
 import Fastify from "fastify";
 import { z } from "zod";
 import { classify } from "./classification/orchestrator.js";
-import { loadProductConfig } from "./config/product-config.js";
-
-const PRODUCT_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+import {
+  loadProductConfigById,
+  PRODUCT_ID_PATTERN,
+} from "./config/product-config.js";
 
 const ClassifyRequestSchema = z.object({
   documentText: z.string().min(1),
@@ -48,7 +49,7 @@ export function buildServer() {
 
     let config;
     try {
-      config = loadProductConfig(`${configDir}/${parsed.data.productId}.json`);
+      config = loadProductConfigById(configDir, parsed.data.productId);
     } catch {
       reply
         .code(404)
@@ -61,11 +62,9 @@ export function buildServer() {
       reply.send(result);
     } catch (err) {
       request.log.error(err, "classification failed");
-      reply
-        .code(502)
-        .send({
-          error: "Classification failed due to a downstream service error",
-        });
+      reply.code(502).send({
+        error: "Classification failed due to a downstream service error",
+      });
     }
   });
 

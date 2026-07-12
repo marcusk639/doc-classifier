@@ -8,7 +8,7 @@ vi.mock("./config/product-config.js");
 
 describe("POST /classify", () => {
   beforeEach(() => {
-    vi.mocked(configModule.loadProductConfig).mockReturnValue({
+    vi.mocked(configModule.loadProductConfigById).mockReturnValue({
       productId: "test",
       referenceSourceId: "test-source",
       classificationPrompt: "test",
@@ -55,7 +55,7 @@ describe("POST /classify", () => {
   });
 
   it("rejects a path-traversal productId with 400, never reaching the filesystem", async () => {
-    vi.mocked(configModule.loadProductConfig).mockClear();
+    vi.mocked(configModule.loadProductConfigById).mockClear();
 
     const app = buildServer();
     const response = await app.inject({
@@ -65,12 +65,12 @@ describe("POST /classify", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(configModule.loadProductConfig).not.toHaveBeenCalled();
+    expect(configModule.loadProductConfigById).not.toHaveBeenCalled();
   });
 
-  it("returns 404 with a generic message when loadProductConfig throws for an unknown productId", async () => {
-    vi.mocked(configModule.loadProductConfig).mockClear();
-    vi.mocked(configModule.loadProductConfig).mockImplementationOnce(() => {
+  it("returns 404 with a generic message when loadProductConfigById throws for an unknown productId", async () => {
+    vi.mocked(configModule.loadProductConfigById).mockClear();
+    vi.mocked(configModule.loadProductConfigById).mockImplementationOnce(() => {
       throw new Error(
         "Could not read product classification config at ./config/unknown.json",
       );

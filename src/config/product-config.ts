@@ -14,6 +14,12 @@ export type ProductClassificationConfig = z.infer<
   typeof ProductClassificationConfigSchema
 >;
 
+export const PRODUCT_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+export function isValidProductId(productId: string): boolean {
+  return PRODUCT_ID_PATTERN.test(productId);
+}
+
 export function loadProductConfig(
   configPath: string,
 ): ProductClassificationConfig {
@@ -44,4 +50,14 @@ export function loadProductConfig(
     );
   }
   return parsed.data;
+}
+
+export function loadProductConfigById(
+  configDir: string,
+  productId: string,
+): ProductClassificationConfig {
+  if (!isValidProductId(productId)) {
+    throw new Error(`Invalid productId: ${productId}`);
+  }
+  return loadProductConfig(`${configDir}/${productId}.json`);
 }

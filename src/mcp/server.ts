@@ -1,9 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { classify } from "../classification/orchestrator.js";
-import { loadProductConfig } from "../config/product-config.js";
-
-const PRODUCT_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+import {
+  loadProductConfigById,
+  PRODUCT_ID_PATTERN,
+} from "../config/product-config.js";
 
 const ClassifyDocumentInputSchema = {
   documentText: z.string().min(1).describe("The document content to classify."),
@@ -38,7 +39,7 @@ export async function handleClassifyDocument({
 
   let config;
   try {
-    config = loadProductConfig(`${configDir}/${productId}.json`);
+    config = loadProductConfigById(configDir, productId);
   } catch (err) {
     console.error(
       `[doc-classifier MCP] config load failed for productId=${productId}:`,
