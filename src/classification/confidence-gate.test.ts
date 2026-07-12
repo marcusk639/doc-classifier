@@ -36,4 +36,17 @@ describe("applyConfidenceGate", () => {
     );
     expect(result).toEqual({ class: "B", needsReview: false });
   });
+
+  it("passes through unchanged when confidence exactly equals the threshold", () => {
+    const result = applyConfidenceGate(
+      {
+        class: "B",
+        confidence: 0.6,
+        rationale: "boundary case",
+        retrievedContextIds: [],
+      },
+      config,
+    );
+    expect(result).toEqual({ class: "B", needsReview: false });
+  });
 });
