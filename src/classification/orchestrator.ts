@@ -34,15 +34,20 @@ export async function classify(
       ? RESTRICTED_ACCESS_HANDLING
       : SHARED_ACCESS_HANDLING;
 
+  let rationale = llmResult.rationale;
+  if (gated.class !== llmResult.class) {
+    rationale += ` Confidence (${llmResult.confidence.toFixed(2)}) was below the threshold (${config.confidenceThreshold}), so this was downgraded to the conservative tier for review.`;
+  }
+  if (piiFindings.length > 0) {
+    rationale += ` Additionally, direct identifiers were detected (${piiFindings
+      .map((f) => f.entityType)
+      .join(", ")}), forcing the most restrictive tier.`;
+  }
+
   return {
     class: finalClass,
     handlingRules,
-    rationale:
-      piiFindings.length > 0
-        ? `${llmResult.rationale} Additionally, direct identifiers were detected (${piiFindings
-            .map((f) => f.entityType)
-            .join(", ")}), forcing the most restrictive tier.`
-        : llmResult.rationale,
+    rationale,
     confidence: llmResult.confidence,
     retrievedContextIds: llmResult.retrievedContextIds,
     needsReview: gated.needsReview || piiFindings.length > 0,

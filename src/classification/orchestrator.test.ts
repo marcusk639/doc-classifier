@@ -49,4 +49,20 @@ describe("classify (orchestrator)", () => {
     expect(result.needsReview).toBe(false);
     expect(result.handlingRules.allowedAccessScope).toBe("shared");
   });
+
+  it("cites the confidence-gate override in the rationale when confidence is low and no PII is found", async () => {
+    vi.mocked(presidio.detectPii).mockResolvedValue([]);
+    vi.mocked(classifyModule.classifyDocument).mockResolvedValue({
+      class: "B",
+      confidence: 0.3,
+      rationale: "General correspondence, borderline informal tone.",
+      retrievedContextIds: [],
+    });
+
+    const result = await classify("Some ambiguous text.", config);
+
+    expect(result.class).toBe("D");
+    expect(result.needsReview).toBe(true);
+    expect(result.rationale).toContain("below the threshold");
+  });
 });
