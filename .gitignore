@@ -3,3 +3,4 @@ dist/
 *.log
 config/*.json
 !config/example.json.example
+!config/test.json

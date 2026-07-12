@@ -1,0 +1,8 @@
+{
+  "productId": "test",
+  "referenceSourceId": "test-source-placeholder",
+  "classificationPrompt": "You are classifying documents for a generic test product. Given the reference material and the document, determine its sensitivity tier and explain your reasoning.",
+  "model": "openai/gpt-4.1-mini",
+  "conservativeTier": "D",
+  "confidenceThreshold": 0.6
+}
