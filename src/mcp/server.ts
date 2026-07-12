@@ -3,10 +3,16 @@ import { z } from "zod";
 import { classify } from "../classification/orchestrator.js";
 import { loadProductConfig } from "../config/product-config.js";
 
+const PRODUCT_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
 const ClassifyDocumentInputSchema = {
   documentText: z.string().min(1).describe("The document content to classify."),
   productId: z
     .string()
+    .regex(
+      PRODUCT_ID_PATTERN,
+      "productId must contain only letters, numbers, underscores, and hyphens",
+    )
     .describe(
       "Which product's classification config to use (e.g. 'veteran-claims-app').",
     ),
@@ -19,18 +25,59 @@ export async function handleClassifyDocument({
   documentText: string;
   productId: string;
 }) {
+  if (!PRODUCT_ID_PATTERN.test(productId)) {
+    return {
+      content: [
+        { type: "text" as const, text: `Invalid productId: ${productId}` },
+      ],
+      isError: true,
+    };
+  }
+
   const configDir = process.env.PRODUCT_CONFIG_DIR ?? "./config";
-  const config = loadProductConfig(`${configDir}/${productId}.json`);
-  const result = await classify(documentText, config);
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: `Classified as tier ${result.class}: ${result.rationale}`,
-      },
-    ],
-    structuredContent: result,
-  };
+
+  let config;
+  try {
+    config = loadProductConfig(`${configDir}/${productId}.json`);
+  } catch (err) {
+    console.error(
+      `[doc-classifier MCP] config load failed for productId=${productId}:`,
+      err,
+    );
+    return {
+      content: [
+        { type: "text" as const, text: `Unknown productId: ${productId}` },
+      ],
+      isError: true,
+    };
+  }
+
+  try {
+    const result = await classify(documentText, config);
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: `Classified as tier ${result.class}: ${result.rationale}`,
+        },
+      ],
+      structuredContent: result,
+    };
+  } catch (err) {
+    console.error(
+      `[doc-classifier MCP] classification failed for productId=${productId}:`,
+      err,
+    );
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: "Classification failed due to a downstream service error",
+        },
+      ],
+      isError: true,
+    };
+  }
 }
 
 export function buildMcpServer(): McpServer {
