@@ -1,0 +1,8 @@
+{
+  "productId": "example-product",
+  "referenceSourceId": "rag-system-source-id-for-this-products-classification-reference-corpus",
+  "classificationPrompt": "You are classifying documents for [product]. Given the reference material and the document, determine its sensitivity tier and explain your reasoning.",
+  "model": "openai/gpt-4.1-mini",
+  "conservativeTier": "D",
+  "confidenceThreshold": 0.6
+}
