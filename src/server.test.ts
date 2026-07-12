@@ -53,4 +53,54 @@ describe("POST /classify", () => {
 
     expect(response.statusCode).toBe(400);
   });
+
+  it("rejects a path-traversal productId with 400, never reaching the filesystem", async () => {
+    vi.mocked(configModule.loadProductConfig).mockClear();
+
+    const app = buildServer();
+    const response = await app.inject({
+      method: "POST",
+      url: "/classify",
+      payload: { documentText: "hello", productId: "../../../../etc/passwd" },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(configModule.loadProductConfig).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 with a generic message when loadProductConfig throws for an unknown productId", async () => {
+    vi.mocked(configModule.loadProductConfig).mockClear();
+    vi.mocked(configModule.loadProductConfig).mockImplementationOnce(() => {
+      throw new Error(
+        "Could not read product classification config at ./config/unknown.json",
+      );
+    });
+
+    const app = buildServer();
+    const response = await app.inject({
+      method: "POST",
+      url: "/classify",
+      payload: { documentText: "hello", productId: "unknown" },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json().error).not.toContain("./config");
+  });
+
+  it("returns 502 with a generic message when classify() throws, without leaking the internal error", async () => {
+    vi.mocked(orchestrator.classify).mockClear();
+    vi.mocked(orchestrator.classify).mockRejectedValueOnce(
+      new Error("Presidio sidecar unreachable: ECONNREFUSED 127.0.0.1:5001"),
+    );
+
+    const app = buildServer();
+    const response = await app.inject({
+      method: "POST",
+      url: "/classify",
+      payload: { documentText: "hello", productId: "test" },
+    });
+
+    expect(response.statusCode).toBe(502);
+    expect(response.json().error).not.toContain("ECONNREFUSED");
+  });
 });
