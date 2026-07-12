@@ -1,0 +1,17 @@
+[
+  {
+    "documentText": "The patient reports recurring nightmares, hypervigilance, and avoidance of crowds since returning from deployment.",
+    "expectedClass": "D",
+    "productId": "test"
+  },
+  {
+    "documentText": "This memo confirms receipt of your intent to file, dated last week.",
+    "expectedClass": "B",
+    "productId": "test"
+  },
+  {
+    "documentText": "SSN: 123-45-6789, DOB: 01/01/1980.",
+    "expectedClass": "D",
+    "productId": "test"
+  }
+]
