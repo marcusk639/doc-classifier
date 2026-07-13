@@ -7,10 +7,9 @@ vi.mock("../retrieval/rag-client.js");
 vi.mock("ai");
 
 const config = {
-  productId: "veteran-claims-app",
-  referenceSourceId: "va-corpus",
-  classificationPrompt:
-    "Classify VA-disability-related documents by sensitivity.",
+  productId: "acme-corp",
+  referenceSourceId: "acme-corp-kb",
+  classificationPrompt: "Classify documents by sensitivity.",
   model: "openai/gpt-4.1-mini",
   conservativeTier: "D" as const,
   confidenceThreshold: 0.6,
@@ -21,8 +20,8 @@ describe("classifyDocument", () => {
     vi.mocked(ragClient.retrieveContext).mockResolvedValue([
       {
         id: "chunk-1",
-        text: "PTSD involves hypervigilance and avoidance.",
-        sourceTitle: "PTSD Guide",
+        text: "Records containing a government-issued ID number are highly sensitive.",
+        sourceTitle: "Sensitivity Reference Guide",
       },
     ]);
     vi.mocked(ai.generateObject).mockResolvedValue({
@@ -30,12 +29,12 @@ describe("classifyDocument", () => {
         tier: "D",
         confidence: 0.92,
         rationale:
-          "Mentions hypervigilance, matching the PTSD reference material.",
+          "Mentions a government-issued ID number, matching the reference material.",
       },
     } as any);
 
     const result = await classifyDocument(
-      "Patient reports hypervigilance and sleep disturbance.",
+      "This record includes the applicant's government-issued ID number.",
       config,
     );
 
@@ -43,7 +42,7 @@ describe("classifyDocument", () => {
     expect(result.confidence).toBe(0.92);
     expect(result.retrievedContextIds).toEqual(["chunk-1"]);
     expect(ragClient.retrieveContext).toHaveBeenCalledWith(expect.any(String), [
-      "va-corpus",
+      "acme-corp-kb",
     ]);
   });
 });

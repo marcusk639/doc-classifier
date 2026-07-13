@@ -7,11 +7,11 @@ augmented, LLM-grounded semantic classification.
 
 ## Why this exists
 
-Built to serve multiple, genuinely different products (a CPA firm's tax-compliance documents, a
-veterans' disability-claims app's health-adjacent documents) without embedding either product's
-domain knowledge in this repo. Each product supplies its own configuration (a reference knowledge
-base already ingested in `rag-system`, plus a classification prompt) — this repo only ships the
-classification _mechanism_.
+Built to serve multiple, genuinely different products (e.g. a tax-compliance document set, a
+health-and-benefits-claims document set) without embedding any single product's domain knowledge
+in this repo. Each product supplies its own configuration (a reference knowledge base already
+ingested in `rag-system`, plus a classification prompt) — this repo only ships the classification
+_mechanism_.
 
 ## Full design context
 
@@ -25,9 +25,9 @@ architectural changes:
   structured-output architecture pattern used here (with real caveats — single-domain, vendor-
   authored preprint; this service's own eval harness is what actually validates _this_ use case).
 - `rag-system/docs/superpowers/specs/2026-07-11-generic-document-classification-engine-design.md`
-  — the minimal interface existing consumers (`veteran-claims-app`, eventually `cpa-consulting`)
-  implement to adopt this service later. Nothing in this repo requires those consumers to change
-  anything now.
+  — the minimal interface consuming products implement to adopt this service later. Nothing in
+  this repo requires any consumer to change anything now, and this repo never names or embeds a
+  specific consumer's identity or domain content.
 
 ## Architecture
 
@@ -57,8 +57,8 @@ pnpm eval                     # runs the golden-set evaluation harness
 
 ## What's deliberately not in this repo yet
 
-- Real per-product classification prompts/knowledge bases for CPA or veteran-claims-app — those
-  are each product's own task when they choose to adopt this service.
+- Real per-product classification prompts/knowledge bases for any specific product — those are
+  each consuming product's own task when they choose to adopt this service.
 - Bootstrapping tooling for auto-ingesting regulatory text into a new domain's knowledge base
   (the vision spec's §2.4 describes this; not built in this initial plan).
 - Multi-principal auth (this service uses a single shared bearer token for now, matching MVP scope

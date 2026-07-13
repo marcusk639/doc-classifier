@@ -14,8 +14,8 @@ function writeFixture(content: unknown): string {
 describe("loadProductConfig", () => {
   it("loads and validates a well-formed config", () => {
     const path = writeFixture({
-      productId: "veteran-claims-app",
-      referenceSourceId: "va-corpus",
+      productId: "acme-corp",
+      referenceSourceId: "acme-corp-kb",
       classificationPrompt: "Classify by sensitivity.",
       model: "openai/gpt-4.1-mini",
       conservativeTier: "D",
@@ -23,7 +23,7 @@ describe("loadProductConfig", () => {
     });
 
     const config = loadProductConfig(path);
-    expect(config.productId).toBe("veteran-claims-app");
+    expect(config.productId).toBe("acme-corp");
   });
 
   it("throws a clear error on malformed config", () => {

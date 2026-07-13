@@ -19,8 +19,8 @@ describe("retrieveContext", () => {
         json: async () => ({
           results: [
             {
-              text: "PTSD involves hypervigilance.",
-              document: { title: "PTSD Guide" },
+              text: "Records containing a government-issued ID number are highly sensitive.",
+              document: { title: "Sensitivity Reference Guide" },
               chunk: { id: "chunk-1" },
             },
           ],
@@ -28,13 +28,15 @@ describe("retrieveContext", () => {
       }),
     );
 
-    const context = await retrieveContext("hypervigilance", ["va-corpus"]);
+    const context = await retrieveContext("sensitive identifiers", [
+      "acme-corp-kb",
+    ]);
 
     expect(context).toEqual([
       {
         id: "chunk-1",
-        text: "PTSD involves hypervigilance.",
-        sourceTitle: "PTSD Guide",
+        text: "Records containing a government-issued ID number are highly sensitive.",
+        sourceTitle: "Sensitivity Reference Guide",
       },
     ]);
   });

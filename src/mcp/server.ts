@@ -15,7 +15,7 @@ const ClassifyDocumentInputSchema = {
       "productId must contain only letters, numbers, underscores, and hyphens",
     )
     .describe(
-      "Which product's classification config to use (e.g. 'veteran-claims-app').",
+      "Which product's classification config to use (e.g. 'acme-corp').",
     ),
 };
 
