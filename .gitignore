@@ -4,3 +4,6 @@ dist/
 config/*.json
 !config/example.json.example
 !config/test.json
+
+# macOS
+.DS_Store
