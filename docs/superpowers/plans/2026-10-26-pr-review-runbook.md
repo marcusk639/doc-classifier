@@ -20,6 +20,11 @@ process (no `GH_TOKEN`, empty cwd, 20 s kill), the review model can write only i
 notes are redacted, and the learn workflow checks out only the default branch. Do not re-pin to an older kit
 commit.
 
+**Final engine precondition:** re-pin all four kit `uses:` lines to the kit's P0.2 release before enabling
+(the branch currently pins P0.1). P0.2 fixes two Highs from the kit's re-review (learning-PR bot identity
+spoofable through the git author name; `withheld` globs silently dropped) and four Mediums. After
+re-pinning, re-run `validate`, `actionlint`, the project check tests and the `local` dry runs above.
+
 The learning job already runs this repo's project check tests on every proposal (`learning.commands.validate`,
 kit P1); a failing proposal is not opened.
 
