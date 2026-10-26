@@ -10,7 +10,7 @@ reviews anything until step 2 has merged.
 ## 0. Before the skeleton PR
 
 **Hard precondition for merging anything:** `marcusk639/pr-review-kit` is published on GitHub (public) and
-contains kit commit `fb07975fc921e046cbc89829c6392c096ee48b12` (P0.1, which includes P1) on its `main`, which all four kit `uses:`
+contains kit commit `7cc0b4a84a12933c6df0e959bc6e80066275bbf4` (P0.2, which includes P0.1 and P1) on its `main`, which all four kit `uses:`
 lines pin. Until then the workflows cannot resolve the action. If the kit has moved on, re-pin all four lines
 to the commit the kit broadcasts, then run `node ~/dev/pr-review-kit/bin/pr-review.mjs validate` and
 `actionlint` again.
@@ -20,10 +20,9 @@ process (no `GH_TOKEN`, empty cwd, 20 s kill), the review model can write only i
 notes are redacted, and the learn workflow checks out only the default branch. Do not re-pin to an older kit
 commit.
 
-**Final engine precondition:** re-pin all four kit `uses:` lines to the kit's P0.2 release before enabling
-(the branch currently pins P0.1). P0.2 fixes two Highs from the kit's re-review (learning-PR bot identity
-spoofable through the git author name; `withheld` globs silently dropped) and four Mediums. After
-re-pinning, re-run `validate`, `actionlint`, the project check tests and the `local` dry runs above.
+**Engine precondition met on the branch:** all four kit `uses:` lines pin P0.2 (`7cc0b4a`), which fixes the
+two Highs from the kit's re-review (learning-PR bot identity now verified through the API; `withheld` globs
+validated instead of dropped) and its Mediums. Do not re-pin to anything older.
 
 The learning job already runs this repo's project check tests on every proposal (`learning.commands.validate`,
 kit P1); a failing proposal is not opened.
@@ -120,8 +119,11 @@ Disable "PR Review" in the Actions tab to silence it at once; revert the workflo
 comments and draft advisories can be deleted. Rotate `PR_REVIEW_ID_KEY` and revoke the PAT if the repo is
 retired.
 
-## Local verification already done (2026-10-26, kit `be671da`; re-run at `74c155b` and `fb07975`)
+## Local verification already done (2026-10-26, kit `be671da`; re-run at `74c155b`, `fb07975` and `7cc0b4a`)
 
+- At `7cc0b4a` (P0.2): validate ok, actionlint clean, 13 tests pass; `4ab8ba2`, `b57f6c7`, `c2bbe14` give the
+  same link types and facts, with rag-system at `09ed608…`; publish dry runs unchanged, no planted detail in
+  output. The addendum now tells the model that the kit sets `AGENTS.md` and `.gitignore` aside as `*.pr-head`.
 - At `fb07975` (P0.1): validate ok, actionlint clean, 13 tests pass. `local` now runs the external checkout:
   `4ab8ba2`, `b57f6c7` and `c2bbe14` each show `marcusk639/rag-system@main → .pr-review-external/rag-system
   (6864e5f…)` with the same link types and facts as before, so the isolated checks still read the PR-head
