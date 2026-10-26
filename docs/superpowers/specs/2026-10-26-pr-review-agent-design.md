@@ -335,7 +335,7 @@ to fail, to confirm the "unverified (external)" path.
 repo's workflow. Not provided: a hook to run this repo's checks on the learning PR's proposed files (raised
 with the kit).
 
-**Pinned at kit `9e21ba2` (final; P0.2, P0.1 and P1).** The learn workflow's checkouts use the default branch, as
+**Pinned at kit `4f54677` (final; P0.2, P0.1 and P1).** The learn workflow's checkouts use the default branch, as
 P0.1 requires. **Adopted from P1:** classes 3, 4, 8 and 9 are `protected` (never demoted; lessons touching
 them held for decision); `learning.commands.validate` runs the project check tests on each learning proposal
 (no formatter is configured in this repo); `checks.writeCollaborators` with `allowed: ["repository-owner"]`;
