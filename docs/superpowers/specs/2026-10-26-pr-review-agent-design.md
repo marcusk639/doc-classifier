@@ -1,7 +1,7 @@
-# Repo-aware PR reviewer for doc-classifier: design (draft)
+# Repo-aware PR reviewer for doc-classifier: design
 
-**Date:** 2026-10-26 · **Status:** draft, awaiting the shared engine's interface and Marcus's checkpoint
-answers · **Owner:** Marcus Klein · **Evidence:** `2026-10-26-pr-review-project-brief.md` (cited as
+**Date:** 2026-10-26 · **Status:** approved at the phase 3 checkpoint (decisions in §12); implemented by
+`docs/superpowers/plans/2026-10-26-pr-review-agent.md` · **Owner:** Marcus Klein · **Evidence:** `2026-10-26-pr-review-project-brief.md` (cited as
 "brief §N")
 
 Modelled on recovery-platform's `docs/superpowers/specs/2026-10-22-pr-review-agent-design.md` (cited as
@@ -30,7 +30,7 @@ The reviewer's edge here is the cross-repo map, the fail-conservative invariant 
 | Decision          | Here                                                                                        |
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | Effect on merging | Advisory only. Never blocks, never approves, never a required check.                        |
-| Runtime           | `anthropics/claude-code-action@v1`, via the shared engine pinned to a commit SHA.           |
+| Runtime           | `marcusk639/pr-review-kit` composite actions pinned by full commit SHA (they run `claude-code-action`, itself SHA-pinned by the kit). |
 | Auth and model    | `CLAUDE_CODE_OAUTH_TOKEN` (Marcus's subscription), Opus. **Secret not yet set** (brief §7). |
 | Security findings | Public pointer only; details to a draft repository security advisory (§7.7).                |
 | Review frequency  | Every push, no duplicates, with a simpler tier set (§7.4).                                  |
@@ -82,8 +82,20 @@ committed vulnerability catalogue, a PR editing its own rules, unbounded spend. 
 
 ### 7.1 Workflow
 
-The consumer workflow calls the engine at a pinned SHA, in whatever form the engine settles on. Settings
-specific to this repo:
+The consumer workflow (`.github/workflows/pr-review.yml`) uses the kit's `review` and `publish` composite
+actions, both pinned to the same full kit SHA, and `actions/checkout` pinned by SHA. The kit's security
+review made these mandatory for every consumer; the kit's actions own the parts inside them:
+
+- `--setting-sources user` in `claude_args`; `Skill` and `Read(./.claude-pr/**)` disallowed. `.claude-pr/`
+  holds the PR's own copy of config, so neither the addendum nor anything else tells the model to read it.
+- The neutralize-PR-head step on, covering the root `AGENTS.md` and `.ignore`/`.rgignore`. This matters
+  here: `AGENTS.md` is this repo's instruction file and the action does not restore it from base, so a PR
+  could otherwise rewrite the instructions the model loads.
+- One trust SHA (the PR's base SHA at event time) for facts, the model's knowledge and publish.
+- Knowledge kept where the action's own `.claude/` restore cannot silently swap it, or re-verified after
+  that restore, following the kit's approach.
+
+Settings specific to this repo:
 
 - Triggers `opened`, `synchronize`, `ready_for_review`, `reopened`; skip drafts; same-repo guard; skip
   `dependabot[bot]`. **Dropped:** the `e2e-fix/*` guard (no such branches here).
@@ -97,14 +109,20 @@ specific to this repo:
 
 | File                                    | Contents                                                                                                                                                                    | vs recovery-platform                                                                         |
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `REVIEW-addendum.md`                    | Project paths, the external-counterpart rule (§7.3), the fail-conservative pass, the transport-parity pass, the consumer-neutrality rule. Appended to the engine procedure. | **Adapted.** RP's `REVIEW.md` is the whole procedure; here the engine owns the generic part. |
+| `REVIEW.md` (project addendum)          | Project paths, the external-counterpart rule (§7.3), the fail-conservative pass, the transport-parity pass, the consumer-neutrality rule. Appended to the engine procedure. | **Adapted.** RP's `REVIEW.md` is the whole procedure; here the engine owns the generic part. |
 | `contract-map.md`                       | L1–L11 from brief §2 as "if X changes, check Y", both directions, with counterpart paths.                                                                                   | **Adapted.** One file of about 11 entries instead of three per-product maps.                 |
 | `checklist.md`                          | Classes from brief §3 plus two from design invariants (§7.5), each with triggers and evidence, or "no history yet".                                                         | Same shape.                                                                                  |
 | `conventions.md`                        | Brief §4 as practised, linking AGENTS.md rather than copying it.                                                                                                            | Same shape.                                                                                  |
 | `false-positives.md`                    | Brief §5.                                                                                                                                                                   | Same shape.                                                                                  |
 | `routing.json`                          | Paths → link types → classes, in the engine's schema.                                                                                                                       | Same role; about 10 entries.                                                                 |
-| `learned.md`                            | Learned lessons that fit no other file. Seeded empty: no corrections in history (brief §8).                                                                                 | **New** (feedback learning).                                                                 |
-| `feedback-stats.json` (name per engine) | 👍/👎 counts per class and link type. Seeded empty.                                                                                                                         | **New.**                                                                                     |
+| `config.json`                           | Engine config: classes, tiers, inline cap, checks, trust, learning (kit `docs/design.md` §2.2).                                                                            | **New** (engine config).                                                                     |
+| `learned-lessons.md`                    | Learned lessons that fit no other file. Seeded empty: no corrections in history (brief §8).                                                                                 | **New** (feedback learning).                                                                 |
+| `learned/lessons.json`, `learned/precision.json` | Machine-managed lesson store and 👍/👎 counts per class and link type. Seeded empty.                                                                               | **New.**                                                                                     |
+| `checks/*.mjs`                          | Project checks P1–P5 (§7.6) and their tests.                                                                                                                                | Same role as RP's `contracts*.mjs`.                                                          |
+
+External counterpart paths in the knowledge files are written `rag-system:<path>`, meaning
+`.review-external/rag-system/<path>` in a run. The prefix also keeps the kit's `validate` path check from
+looking for them in this repo.
 
 On every tier the model reads all knowledge files in full. They total a few hundred lines, so RP's
 "grep the heading, read the section" rule is dropped.
@@ -129,8 +147,12 @@ rag-system is public, so the workflow can read it without a credential:
 - Links that are external **without** a readable counterpart (MCP clients for L9, deployment env for L6)
   are reported as "check consumers" notes at Low or in map maintenance, never as breaks.
 
-This needs an engine extension point (§9, E5). If the engine does not offer one, the fallback is the
-"unverified (external)" rule alone, which loses most of G1's value for L1.
+The kit has no input for this at the time of writing (§9, E5, raised with the kit). Until it has, the
+consumer workflow does it in its own step before the kit's review action: clear `.review-external/`, check
+out rag-system with a SHA-pinned `actions/checkout`, write the commit SHA to
+`.review-external/rag-system.sha`, delete that checkout's `.git/`. Project check P5 reports the SHA or
+"unavailable" in `facts.md`. If the kit's neutralize step turns out to remove `.review-external/`, this
+moves into the kit.
 
 ### 7.4 Every push, without duplication
 
@@ -226,7 +248,7 @@ write"), and opaque ledger ids keyed with `PR_REVIEW_ID_KEY`.
 
 Security classes here: 3, 4, 8, 9, and 2 when the parity gap is validation or auth (§7.5). Class 9 is
 the one that differs from RP: a fail-conservative regression has no auth code in it, but it changes who
-may access a document downstream. **Open question Q3.**
+may access a document downstream. Decided at the checkpoint (§12, Q3).
 
 Draft advisories on a public repo do not need private vulnerability reporting (currently off); the
 skeleton run proves this before relying on it.
@@ -246,13 +268,16 @@ Adopted from RP §7.7, with these changes:
 
 Adopted from the engine as specified in the rollout brief, configured as:
 
-- **Trusted authors:** `marcusk639` only (sole collaborator). Everyone else, including the bot, is
-  ignored. Public repo: any stranger can react, so this setting is load-bearing.
+- **Trusted feedback:** only the repo owner (`marcusk639`). Reactions count; a reply counts only when its
+  first non-quoted line starts with `review:`. Edited comments are ignored. Everyone else, including the
+  bot, is ignored. Public repo: any stranger can react, so this setting is load-bearing.
 - **Seed:** `learned.md` and the stats file empty; no corrections in history (brief §8).
 - **Cadence:** the engine default. With PR volume near zero, a weekly scheduled learning run will usually
   find nothing; it must then exit without opening or touching a PR.
-- **Merge policy:** every lesson via the learning PR for Marcus's review, unless the checkpoint decides
-  otherwise (Q4).
+- **Merge policy:** no auto-merge. Every lesson arrives in the weekly learning PR for Marcus's review.
+- **Learning PR:** no author or branch exemption from the self-edit finding, no PAT and no dispatched CI on
+  it. The learn job runs this repo's checks itself before proposing: the kit's `validate` and the project
+  check tests (the repo has no formatter configured).
 - **Security narrowing:** any lesson that narrows classes 3, 4, 8 or 9 is flagged in the learning PR.
 - **Neutrality:** lessons are rewritten without consumer names before they are proposed (class 7).
 
@@ -322,15 +347,15 @@ to fail, to confirm the "unverified (external)" path.
 - Pin the Presidio image instead of `latest`.
 - Add a `packageManager` field (or document the pnpm 12 behaviour) so installs stop rewriting the lockfile.
 
-## 12. Open questions for Marcus
+## 12. Decisions at the phase 3 checkpoint
 
-- **Q1.** Is reading rag-system's default branch as an external counterpart acceptable (§7.3)? It is
-  public and read-only, but it ties this reviewer to rag-system's file layout.
-- **Q2.** Three tiers (`none`/`light`/`full`) instead of six (§7.4)?
-- **Q3.** Should fail-conservative regressions (class 9) go through the private security channel, or be
-  posted publicly in full, since the PR's own diff already shows them?
-- **Q4.** May any lesson merge without your review (for example an explicit correction from you scoped
-  to one path), or does every lesson go through the learning PR?
-- **Q5.** Should the raw document text reach the LLM when Presidio has already found direct identifiers
-  (brief §5, last item)? This decides whether the reviewer treats such a change as intentional.
-- **Q6.** Is a small CI job for `tsc` and `vitest` in scope now (§11)? If yes, P1 can be dropped.
+- **Q1 (external counterpart):** yes, read rag-system's default branch (§7.3).
+- **Q2 (tiers):** three tiers, `none`/`light`/`full` (§7.4). The kit at the time of writing offers either
+  its six tiers or `full`/`none` only; until it adds a `light` option this repo runs `tiers.enabled: false`,
+  so a docs-only push gets a full run.
+- **Q3 (class 9):** fail-conservative regressions are security findings: public pointer plus the private
+  channel, as for every other security class, because the repo is public.
+- **Q4 (auto-merge):** none.
+- **Q5 (raw text with PII reaching the LLM):** a product decision outside this rollout; the reviewer treats
+  the current behaviour as intentional (`false-positives.md`) and reports it to Marcus separately.
+- **Q6 (CI job):** out of scope, a follow-up (§11). P1 stays.
