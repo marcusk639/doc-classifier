@@ -29,12 +29,14 @@
     {
       "id": 3,
       "name": "Request fields reaching the filesystem or a URL unvalidated",
-      "security": true
+      "security": true,
+      "protected": true
     },
     {
       "id": 4,
       "name": "Internal error detail returned to callers",
-      "security": true
+      "security": true,
+      "protected": true
     },
     {
       "id": 5,
@@ -54,12 +56,14 @@
       "name": "Secrets, PII or document text in code, fixtures, logs or output",
       "security": true,
       "always": true,
-      "light": true
+      "light": true,
+      "protected": true
     },
     {
       "id": 9,
       "name": "Fail-conservative regression",
-      "security": true
+      "security": true,
+      "protected": true
     },
     {
       "id": 10,
@@ -118,7 +122,12 @@
     "verifyDiff": false,
     "project": [
       "checks/doc-classifier.mjs"
-    ]
+    ],
+    "writeCollaborators": {
+      "allowed": [
+        "repository-owner"
+      ]
+    }
   },
   "trust": {
     "contextAssociations": [
@@ -129,6 +138,11 @@
     ]
   },
   "learning": {
-    "distill": "model"
+    "distill": "model",
+    "commands": {
+      "validate": [
+        "node --test '.pr-review/checks/test/*.test.mjs'"
+      ]
+    }
   }
 }

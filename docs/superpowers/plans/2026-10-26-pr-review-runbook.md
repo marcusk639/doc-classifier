@@ -10,7 +10,7 @@ reviews anything until step 2 has merged.
 ## 0. Before the skeleton PR
 
 **Hard precondition for merging anything:** `marcusk639/pr-review-kit` is published on GitHub (public) and
-contains kit commit `be671dacb924f94e455ab2448bfa97026beee3d8` on its `main`, which all four kit `uses:`
+contains kit commit `74c155b21f81b3154ae5347580760c78ed681810` (P1) on its `main`, which all four kit `uses:`
 lines pin. Until then the workflows cannot resolve the action. If the kit has moved on, re-pin all four lines
 to the commit the kit broadcasts, then run `node ~/dev/pr-review-kit/bin/pr-review.mjs validate` and
 `actionlint` again.
@@ -21,8 +21,8 @@ timeout), adds a `parseOnly` helper, limits model writes to the named output fil
 guards the learn workflow to the default branch. Re-run the project check tests, `validate` and
 `actionlint` after re-pinning.
 
-**Later (kit P1):** wire this repo's checks into the learning PR through `learning.commands` (kit's `validate`
-and `node --test '.pr-review/checks/test/*.test.mjs'`) once the kit enforces it.
+The learning job already runs this repo's project check tests on every proposal (`learning.commands.validate`,
+kit P1); a failing proposal is not opened.
 
 ## 1. Skeleton PR
 
@@ -39,6 +39,9 @@ and `node --test '.pr-review/checks/test/*.test.mjs'`) once the kit enforces it.
 - [ ] `SECURITY_ADVISORY_TOKEN`: Marcus creates a fine-grained PAT, resource owner `marcusk639`, repository
       access **only** `doc-classifier`, permission "Repository security advisories: Read and write", nothing
       else; then `gh secret set SECURITY_ADVISORY_TOKEN -R marcusk639/doc-classifier`.
+- [ ] Optional `PR_REVIEW_REDACT_TERMS`: newline-separated names of consuming products (and any other term
+      that must never appear in public). The kit strips them from facts and from everything it posts or
+      proposes; it never reaches the model. This keeps class 7 enforceable without committing the names.
 - [ ] Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests" (for the
       learning PR).
 - [ ] Leave private vulnerability reporting off; draft advisories do not need it (step 3 proves this).
@@ -113,8 +116,10 @@ Disable "PR Review" in the Actions tab to silence it at once; revert the workflo
 comments and draft advisories can be deleted. Rotate `PR_REVIEW_ID_KEY` and revoke the PAT if the repo is
 retired.
 
-## Local verification already done (2026-10-26, kit `be671da`)
+## Local verification already done (2026-10-26, kit `be671da`; re-run at `74c155b`)
 
+- At `74c155b`: validate ok, actionlint clean, tests pass, `4ab8ba2`/`b57f6c7` facts unchanged and every class
+  tagged (security, protected, always, light) in facts.
 - Project check tests: 13 pass (`node --test '.pr-review/checks/test/*.test.mjs'`).
 - `node ~/dev/pr-review-kit/bin/pr-review.mjs validate`: ok. `actionlint`: clean on both workflows.
 - Facts dry runs (`local --base <sha>^ --head <sha> --project .pr-review`):

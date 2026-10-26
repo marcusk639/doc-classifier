@@ -335,6 +335,14 @@ to fail, to confirm the "unverified (external)" path.
 repo's workflow. Not provided: a hook to run this repo's checks on the learning PR's proposed files (raised
 with the kit).
 
+**Adopted at kit `74c155b` (P1):** classes 3, 4, 8 and 9 are `protected` (never demoted; lessons touching
+them held for decision); `learning.commands.validate` runs the project check tests on each learning proposal
+(no formatter is configured in this repo); `checks.writeCollaborators` with `allowed: ["repository-owner"]`;
+an optional `redact_terms` secret (`PR_REVIEW_REDACT_TERMS`) on review, publish and learn, which removes
+consuming products' names from all posted text, the deterministic backstop for class 7 that a committed
+denylist could not be (§7.6). Not adopted: the `closed` trigger (one author, PRs rarely merge before a
+review), `style` rules and `minConfidence` floors (no trial data yet).
+
 ## 10. Calls made by Claude (please check)
 
 - Three tiers instead of six; whole-PR review on every non-trivial push.
