@@ -10,5 +10,5 @@
   { "linkType": "mcp-surface", "paths": ["src/mcp/**"], "counterparts": ["README.md"], "classes": [2, 11] },
   { "linkType": "doc-links", "paths": ["README.md", "AGENTS.md", "docs/**"], "counterparts": ["rag-system:docs/archive/specs/2026-07-11-generic-document-classification-engine-design.md", "src/**"], "classes": [7, 11] },
   { "linkType": "module-resolution", "paths": ["src/**/*.ts", "eval/**/*.ts", "tsconfig.json"], "counterparts": ["tsconfig.json", "AGENTS.md"], "classes": [12] },
-  { "linkType": "review-config", "paths": [".claude/pr-review/**", ".github/workflows/pr-review*.yml"], "counterparts": [], "classes": [8] }
+  { "linkType": "review-config", "paths": [".pr-review/**", ".github/workflows/pr-review*.yml"], "counterparts": [], "classes": [8] }
 ]

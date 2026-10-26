@@ -27,7 +27,7 @@ be resolved) or, if pushed, an engine without them.
 
 - [ ] Push `chore/pr-review` and open a PR to `main` (title `ci: add advisory PR reviewer`). Merge commit, as
       PR #1 was.
-- [ ] Expected on this PR: no review. The kit actions run, but the base branch has no `.claude/pr-review/`, so
+- [ ] Expected on this PR: no review. The kit actions run, but the base branch has no `.pr-review/`, so
       facts yields tier `none` and publish posts nothing (no secrets are set yet either).
 - [ ] Merge.
 
@@ -112,7 +112,7 @@ retired.
 
 ## Local verification already done (2026-10-26)
 
-- Project check tests: 15 pass (`node --test '.claude/pr-review/checks/test/*.test.mjs'`).
+- Project check tests: 15 pass (`node --test '.pr-review/checks/test/*.test.mjs'`).
 - `node ~/dev/pr-review-kit/bin/pr-review.mjs validate`: ok. `actionlint`: clean.
 - Facts dry runs at kit `90809da` with a stand-in `.review-external/rag-system.sha`:
   - `4ab8ba2` (introduced the class 1 bug fixed in `1c8dd1d`): link types `rag-search`, `env-vars`,

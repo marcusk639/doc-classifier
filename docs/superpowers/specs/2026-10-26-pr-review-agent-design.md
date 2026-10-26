@@ -92,8 +92,11 @@ review made these mandatory for every consumer; the kit's actions own the parts 
   here: `AGENTS.md` is this repo's instruction file and the action does not restore it from base, so a PR
   could otherwise rewrite the instructions the model loads.
 - One trust SHA (the PR's base SHA at event time) for facts, the model's knowledge and publish.
-- Knowledge kept where the action's own `.claude/` restore cannot silently swap it, or re-verified after
-  that restore, following the kit's approach.
+- Knowledge lives in a root `.pr-review/` directory, not under `.claude/`: `claude-code-action` restores
+  `.claude/` from the base branch tip during the review step, which would replace what the engine loaded
+  from the trust SHA. Facts, the model's copy and publish all read `.pr-review/` from the base SHA's
+  checkout, and the working-tree copy is replaced from it before the model runs; a PR's own edits to
+  `.pr-review/` reach the model only through `pr.diff`.
 
 Settings specific to this repo:
 
@@ -105,7 +108,7 @@ Settings specific to this repo:
 - An extra read-only step checks out `marcusk639/rag-system` at its default branch into
   `.review-external/rag-system`, sparse, with `persist-credentials: false` and no token (§7.3).
 
-### 7.2 Knowledge files (`.claude/pr-review/`)
+### 7.2 Knowledge files (`.pr-review/`)
 
 | File                                    | Contents                                                                                                                                                                    | vs the reference                                                                         |
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -286,7 +289,7 @@ Adopted from the engine as specified in the rollout brief, configured as:
 
 ### 7.10 Delivery order and rollback
 
-RP §7.10 and its "order of testing" apply unchanged: the PR that adds `.claude/pr-review/` and the
+RP §7.10 and its "order of testing" apply unchanged: the PR that adds `.pr-review/` and the
 workflow is reviewed without them, so it merges first. Then secrets (`CLAUDE_CODE_OAUTH_TOKEN`,
 `PR_REVIEW_ID_KEY`, `SECURITY_ADVISORY_TOKEN`), a test PR, replay PRs, a feedback round trip, and the
 trial. Rollback is reverting the workflow or disabling it in the Actions tab.
@@ -319,7 +322,7 @@ to fail, to confirm the "unverified (external)" path.
 | E1  | Knowledge paths and procedure addendum: engine `REVIEW.md` plus a project addendum file                                                                                     | §7.2; the generic procedure must not name RP's maps.           |
 | E2  | Tier set and per-tier turn caps as config; allow `none`/`light`/`full` only, with "light" path patterns configurable                                                        | §7.4                                                           |
 | E3  | Routing schema: path globs → link types → classes, read by facts                                                                                                            | §7.5                                                           |
-| E4  | Project check hook: extra `.mjs` modules in `.claude/pr-review/checks/` loaded from base, receiving the parsed diff and file list, returning facts lines; failures isolated | P1–P4                                                          |
+| E4  | Project check hook: extra `.mjs` modules in `.pr-review/checks/` loaded from base, receiving the parsed diff and file list, returning facts lines; failures isolated | P1–P4                                                          |
 | E5  | External counterpart checkout: `{repo, ref, sparse paths, dir}` list, public repos without a token, SHA recorded in facts, failure → "unavailable" fact                     | §7.3; the main value for L1/L2/L10                             |
 | E6  | Toggle each generic check (file-size rule and its limit, PR-title check, test-tamper heuristics, secret patterns extendable)                                                | §7.6                                                           |
 | E7  | Security class list and "security area" names as config, used by the ledger, inline guard and advisory channel                                                              | §7.7                                                           |

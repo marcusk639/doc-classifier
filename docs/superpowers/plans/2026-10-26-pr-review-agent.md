@@ -9,7 +9,7 @@ with this repo's own knowledge, checks and learned memory.
 
 **Architecture:** The kit's `review` and `publish` composite actions, pinned by full SHA, run from
 `.github/workflows/pr-review.yml`; the kit's `learn` and `propose` actions run weekly from
-`.github/workflows/pr-review-learn.yml`. Everything project-specific lives under `.claude/pr-review/` and is
+`.github/workflows/pr-review-learn.yml`. Everything project-specific lives under `.pr-review/` and is
 read from the base branch. One consumer step checks out rag-system's default branch read-only as an external
 counterpart.
 
@@ -49,7 +49,7 @@ counterpart.
 
 **Files:**
 
-- Create: `.claude/pr-review/config.json`, `routing.json`, `REVIEW.md`, `checklist.md`, `conventions.md`,
+- Create: `.pr-review/config.json`, `routing.json`, `REVIEW.md`, `checklist.md`, `conventions.md`,
   `false-positives.md`, `contract-map.md`, `learned-lessons.md`, `learned/lessons.json`,
   `learned/precision.json`
 
@@ -73,8 +73,8 @@ counterpart.
 
 **Files:**
 
-- Create: `.claude/pr-review/checks/doc-classifier.mjs`
-- Test: `.claude/pr-review/checks/test/doc-classifier.test.mjs`
+- Create: `.pr-review/checks/doc-classifier.mjs`
+- Test: `.pr-review/checks/test/doc-classifier.test.mjs`
 
 **Interfaces:**
 
@@ -95,7 +95,7 @@ counterpart.
   - P5: `.review-external/rag-system.sha` holding 40 hex → fact with that SHA; missing or malformed →
     fact "external counterparts unavailable".
   - Robustness: a deleted file entry and a `binary: true` entry produce no throw.
-- [ ] **Step 2:** Run `node --test '.claude/pr-review/checks/test/*.test.mjs'` → FAIL (module missing).
+- [ ] **Step 2:** Run `node --test '.pr-review/checks/test/*.test.mjs'` → FAIL (module missing).
 - [ ] **Step 3:** Implement `doc-classifier.mjs` (Node built-ins only).
 - [ ] **Step 4:** Run the tests → PASS.
 - [ ] **Step 5:** Commit `feat: add doc-classifier project checks`.
@@ -123,7 +123,7 @@ counterpart.
 
 - [ ] **Step 1:** For `4ab8ba2` (class 1, the rag-system client that read `r.chunkId`), `b57f6c7` (class 2,
       the MCP tool added without the REST validation), and `c2bbe14` (PR #1), run
-      `node ~/dev/pr-review-kit/bin/pr-review.mjs local --base <sha>^ --head <sha> --project .claude/pr-review`
+      `node ~/dev/pr-review-kit/bin/pr-review.mjs local --base <sha>^ --head <sha> --project .pr-review`
       with a fake `.review-external/rag-system.sha` present. Expected: routing names the right link types;
       P2 fires on `b57f6c7`; P5 reports the SHA.
 - [ ] **Step 2:** Hand-write a `findings.json`/`summary.md` pair for `b57f6c7` with one class 2 finding and

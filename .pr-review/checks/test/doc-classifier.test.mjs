@@ -1,4 +1,4 @@
-// Tests for the doc-classifier project checks. Run: node --test '.claude/pr-review/checks/test/*.test.mjs'
+// Tests for the doc-classifier project checks. Run: node --test '.pr-review/checks/test/*.test.mjs'
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';

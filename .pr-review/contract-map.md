@@ -104,7 +104,7 @@ reports under `external-counterpart`. If facts says it is unavailable, report th
 
 ## review-config
 
-- `.claude/pr-review/**` and `.github/workflows/pr-review*.yml` are the reviewer itself (self-edit; see the
+- `.pr-review/**` and `.github/workflows/pr-review*.yml` are the reviewer itself (self-edit; see the
   kit's procedure).
 
 <!-- pr-review:learned:begin -->
