@@ -15,6 +15,15 @@ lines pin. Until then the workflows cannot resolve the action. If the kit has mo
 to the commit the kit broadcasts, then run `node ~/dev/pr-review-kit/bin/pr-review.mjs validate` and
 `actionlint` again.
 
+**Second precondition:** re-pin all four kit `uses:` lines to the kit's P0.1 release before enabling the
+reviewer. P0.1 runs project checks in an isolated child process (no `GH_TOKEN`, empty cwd, hard kill
+timeout), adds a `parseOnly` helper, limits model writes to the named output files, redacts check notes and
+guards the learn workflow to the default branch. Re-run the project check tests, `validate` and
+`actionlint` after re-pinning.
+
+**Later (kit P1):** wire this repo's checks into the learning PR through `learning.commands` (kit's `validate`
+and `node --test '.pr-review/checks/test/*.test.mjs'`) once the kit enforces it.
+
 ## 1. Skeleton PR
 
 - [ ] Push `chore/pr-review` and open a PR to `main` (title `ci: add advisory PR reviewer`). Merge commit, as
