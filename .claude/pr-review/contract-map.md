@@ -35,7 +35,8 @@ reports under `external-counterpart`. If facts says it is unavailable, report th
 
 - `src/pii/presidio-client.ts`: `PRESIDIO_URL` defaulting to port 5002, `POST /analyze` with
   `{text, language}`, reading `entity_type`, `start`, `end`, `score`.
-- Other side: `docker-compose.yml` maps host 5002 to the analyzer's container port and pins the image tag.
+- Other side: `docker-compose.yml` maps host 5002 to the analyzer's container port; the image tag floats (`latest`), so the
+  analyzer's API can change without a commit here.
   A port change on one side fails only at runtime; the client test mocks `fetch`.
 - Downstream: `src/classification/orchestrator.ts` forces the conservative tier on any finding (class 9).
 
@@ -52,7 +53,7 @@ reports under `external-counterpart`. If facts says it is unavailable, report th
 
 - `ProductClassificationConfigSchema` in `src/config/product-config.ts`.
 - Other side: `config/example.json.example`, `config/test.json`, the `.gitignore` allowlist for committed
-  configs, the README setup step, and the inline config objects in `src/**/*.test.ts` (eight of them).
+  configs, the README setup step, and the inline config objects in `src/**/*.test.ts` (seven, in six test files).
 - A new required key breaks every committed config and the eval at load time. A new committed config file is
   hidden by `.gitignore` unless allowlisted.
 

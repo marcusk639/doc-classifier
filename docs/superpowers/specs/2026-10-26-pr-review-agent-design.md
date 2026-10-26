@@ -4,8 +4,8 @@
 `docs/superpowers/plans/2026-10-26-pr-review-agent.md` · **Owner:** Marcus Klein · **Evidence:** `2026-10-26-pr-review-project-brief.md` (cited as
 "brief §N")
 
-Modelled on recovery-platform's `docs/superpowers/specs/2026-10-22-pr-review-agent-design.md` (cited as
-"RP §N"). The engine comes from the shared `pr-review-kit` repository; this spec covers what
+Modelled on the design of the reference reviewer this kit was extracted from (cited as "RP §N"; that
+reviewer's repository and paths are not named here). The engine comes from the shared `pr-review-kit` repository; this spec covers what
 doc-classifier configures, adds or leaves out.
 
 ## 1. Intent
@@ -25,7 +25,7 @@ does not come from size. It comes from three things a generic reviewer does not 
 
 The reviewer's edge here is the cross-repo map, the fail-conservative invariant and transport parity.
 
-## 2. Decisions inherited from recovery-platform (RP §2)
+## 2. Decisions inherited from the reference (RP §2)
 
 | Decision          | Here                                                                                        |
 | ----------------- | ------------------------------------------------------------------------------------------- |
@@ -107,7 +107,7 @@ Settings specific to this repo:
 
 ### 7.2 Knowledge files (`.claude/pr-review/`)
 
-| File                                    | Contents                                                                                                                                                                    | vs recovery-platform                                                                         |
+| File                                    | Contents                                                                                                                                                                    | vs the reference                                                                         |
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | `REVIEW.md` (project addendum)          | Project paths, the external-counterpart rule (§7.3), the fail-conservative pass, the transport-parity pass, the consumer-neutrality rule. Appended to the engine procedure. | **Adapted.** RP's `REVIEW.md` is the whole procedure; here the engine owns the generic part. |
 | `contract-map.md`                       | L1–L11 from brief §2 as "if X changes, check Y", both directions, with counterpart paths.                                                                                   | **Adapted.** One file of about 11 entries instead of three per-product maps.                 |
@@ -160,14 +160,17 @@ moves into the kit.
 superseded-head detection, and "a failed run never looks clean". These carry the no-duplicate and
 honest-failure principles, and the engine provides them.
 
-**Tiers: simplified.** RP's six tiers exist because one recovery-platform PR can be 5k lines across four
-products. Here the whole repo is smaller than an average RP PR, and there is one PR in the repo's history.
+**Tiers: simplified.** RP's six tiers exist because one PR in the reference repo can be 5k lines across
+several products. Here the whole repo is smaller than an average RP PR, and there is one PR in the repo's history.
 
 | Tier    | When                                                                                            | Turn cap (starting) |
 | ------- | ----------------------------------------------------------------------------------------------- | ------------------- |
 | `none`  | Empty increment since the last reviewed SHA, or engine scripts not on base yet.                 | 0                   |
 | `light` | Increment is only docs, lockfile or `.gitignore`, and touches no link type (L10 counts as one). | 10                  |
 | `full`  | Everything else: review the whole PR diff, deduplicated against the ledger and inline markers.  | 30                  |
+
+Until the kit ships `tiers.set: "none-light-full"`, `config.json` runs `tiers.enabled: false` with only
+the `full` cap set; the `light` row and its `lightFiles` are added with that option (§12, Q2).
 
 **Dropped:** `incremental`, `incremental-new-links` and `base-drift`. Re-reviewing the whole PR on each
 push costs a few turns here and removes a class of "the increment missed context" errors. Base drift
@@ -185,9 +188,9 @@ marked so in the checklist.
 | #   | Class                                                                                                                                                                 | Evidence                                          | Security?                                    |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------- |
 | 1   | Cross-repo contract drift (rag-system search, `DocumentClassifier`, doc links)                                                                                        | `1c8dd1d`; README drift                           | no                                           |
-| 2   | Fix or behaviour change on one transport only                                                                                                                         | `2412f56` → `97c642d`, `c828d4e`                  | no (yes if the change is validation or auth) |
-| 3   | Request fields reaching the filesystem or a URL without validation                                                                                                    | `2412f56`, `97c642d`                              | yes                                          |
-| 4   | Internal error detail returned to callers                                                                                                                             | `2412f56`, `97c642d`                              | yes                                          |
+| 2   | Fix or behaviour change on one transport only                                                                                                                         | initial build; `c828d4e`                  | no (yes if the change is validation or auth) |
+| 3   | Request fields reaching the filesystem or a URL without validation                                                                                                    | initial build (pattern only)                      | yes                                          |
+| 4   | Internal error detail returned to callers                                                                                                                             | initial build (pattern only)                      | yes                                          |
 | 5   | Rationale or `needsReview` that hides an override                                                                                                                     | `24da866`                                         | no                                           |
 | 6   | Committed configs, fixtures, golden set or `.gitignore` out of step with code                                                                                         | `f216d1d`                                         | no                                           |
 | 7   | Consumer identity or domain content in a generic repo                                                                                                                 | `305902b`                                         | no                                           |
@@ -227,8 +230,8 @@ Project checks (through the engine's check hook, §9 E4), each a hint the model 
   `.js` suffix.
 - **P2. Pair edits.** One of `src/server.ts` / `src/mcp/server.ts` changed and the other not (engine
   "duplicate pair" generic, if it exists).
-- **P3. Env-var drift.** `process.env.NAME` added or removed in the diff, and whether `NAME` appears in
-  `README.md`.
+- **P3. Env-var drift.** `process.env.NAME` (dot, index or destructuring) added or removed in the diff,
+  and whether `NAME` appears in the PR-head `README.md` (read with `git show`, never from the working tree).
 - **P4. Config schema without configs.** `src/config/product-config.ts` schema lines changed with no
   change to `config/example.json.example` or `config/test.json`.
 - **P5. External counterpart SHA.** The rag-system SHA read, or "unavailable".
@@ -240,7 +243,7 @@ Pre-check failures never fail the job (RP §7.4).
 
 ### 7.7 Security findings
 
-**Adopted unchanged.** The repo is public, as recovery-platform is, so the public-pointer rule and the
+**Adopted unchanged.** The repo is public, so the public-pointer rule and the
 draft-advisory channel apply as written in RP §7.9: pointer with severity and area only, details in a
 draft repository security advisory, deduplicated repo-wide, created by the model-free publish step with a
 fine-grained PAT (`SECURITY_ADVISORY_TOKEN`, this repo only, "Repository security advisories: read and
@@ -250,7 +253,7 @@ Security classes here: 3, 4, 8, 9, and 2 when the parity gap is validation or au
 the one that differs from RP: a fail-conservative regression has no auth code in it, but it changes who
 may access a document downstream. Decided at the checkpoint (§12, Q3).
 
-Draft advisories on a public repo do not need private vulnerability reporting (currently off); the
+Draft advisories on a public repo do not depend on private vulnerability reporting; the
 skeleton run proves this before relying on it.
 
 ### 7.8 Output
@@ -291,7 +294,7 @@ trial. Rollback is reverting the workflow or disabling it in the Actions tab.
 Replay set (throwaway branches, clearly labelled, fake weaknesses only):
 
 1. rag-system response field renamed in `rag-client.ts` only (class 1, `1c8dd1d`).
-2. A new validation rule added to `src/server.ts` only (class 2, `2412f56`/`97c642d`).
+2. A new validation rule added to `src/server.ts` only (class 2).
 3. A new required key in `ProductClassificationConfigSchema` with configs unchanged (class 6, `f216d1d`).
 4. An orchestrator change that lets the PII override be skipped on one path (class 9; security channel).
 5. A relative import without `.js` (class 12).

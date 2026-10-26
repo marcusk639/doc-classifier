@@ -3,16 +3,17 @@
 Each entry is deliberate and documented. Flag one only if the PR changes the reason it is safe, and then say
 which reason changed.
 
-## No authentication outside production when the token is unset
+## Local-development mode without a token
 
-`src/server.ts` runs `/classify` without auth when `CLASSIFIER_API_TOKEN` is unset and `NODE_ENV` is not
-`production`, with a warning, and refuses to start in production without it. A single shared bearer token is
-MVP scope (README, "What's deliberately not in this repo yet"). Do flag a change that lets production start
-without the token, or that weakens the check.
+The REST server has a development mode with no token configured, and it must refuse to start in production
+without one (README, "What's deliberately not in this repo yet": one shared bearer token is MVP scope). Don't
+report the development mode itself. Do report any change to how production is detected or to the startup
+refusal, and any new route or transport that does not apply the same token check.
 
-## productId validated in two places
+## productId validated more than once
 
-Each transport and the config loader check `PRODUCT_ID_PATTERN`. Defence in depth, not duplication to remove.
+Each transport and the config loader check `PRODUCT_ID_PATTERN` (`conventions.md`). Defence in depth, not
+duplication to remove.
 
 ## config/test.json committed with placeholder values
 
@@ -32,11 +33,12 @@ names a consumer.
 
 Each consuming product supplies its own (README). Don't ask for real prompts in this repo.
 
-## PII detection and LLM classification run in parallel on the full text
+## The existing parallel PII and LLM calls
 
-The orchestrator sends the document to Presidio and to the LLM at the same time. Whether text with detected
-identifiers should reach the LLM is an open product decision, not a reviewer finding. Do report a change
-that drops the PII override itself (class 9).
+Don't report the orchestrator's existing design of sending the document to Presidio and to the LLM at the same
+time; it is an open product decision outside the reviewer's scope. This entry covers only that existing call.
+Do report any change that widens what reaches the LLM or any other service (more text, metadata, identifiers,
+a new destination or log), and any change to the PII override itself (classes 8 and 9).
 
 ## acme-corp and test placeholders
 

@@ -1,5 +1,5 @@
 # Feedback learning for the PR reviewer (pr-review-kit). Weekly, it reads the
-# repo owner's 👍/👎 and "review:" replies on the reviewer's comments and
+# repo owner's thumbs-up/down reactions and "review:" replies on the reviewer's comments and
 # proposes memory changes as ONE learning PR to merge, edit or close. Memory
 # reaches the reviewer only through that PR; nothing auto-merges. Pins the same
 # kit SHA as pr-review.yml.

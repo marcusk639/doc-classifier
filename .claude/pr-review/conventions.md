@@ -10,10 +10,13 @@ what it leaves out and where docs and code disagree.
 - Zod validates every boundary: request bodies (`src/server.ts`), MCP tool input (`src/mcp/server.ts`),
   product config (`src/config/product-config.ts`) and the LLM's structured output
   (`src/classification/classify.ts`).
-- `productId` is validated twice on purpose: by each transport with `PRODUCT_ID_PATTERN`, and again inside
-  `loadProductConfigById`.
-- Errors: log the full error server-side, return a fixed message. REST answers 400 (bad body), 404 (unknown
-  product), 502 (downstream failure); MCP returns `isError: true` with the same fixed texts.
+- `productId` is validated more than once on purpose: REST checks it in its request schema, MCP in its tool
+  input schema and again at the top of the handler, and `loadProductConfigById` checks it once more.
+- Errors, REST (`src/server.ts`): 400 returns the request-schema validation message; 404 returns a fixed
+  "Unknown productId" text and logs nothing; 502 logs the error and returns a fixed text.
+- Errors, MCP (`src/mcp/server.ts`): config-load and classification failures are both logged to stderr with
+  the `productId` and returned as `isError: true` with a fixed text; an invalid `productId` is echoed back.
+- Neither transport returns a stack, a downstream body or a file path.
 - Config load errors name the file path and say which of read / JSON / schema failed.
 - Downstream clients throw on non-2xx with the status only, never the response body.
 - Shared logic is extracted rather than copied between the two transports.

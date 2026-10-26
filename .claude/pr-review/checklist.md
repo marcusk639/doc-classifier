@@ -22,22 +22,24 @@ issues. Finding `class` numbers in `findings.json` use the numbers below.
   `src/server.ts` or `src/mcp/server.ts` and not in the other. Shared logic belongs in
   `src/config/product-config.ts` or the orchestrator, not in either transport.
 - **Trigger paths:** `src/server.ts`, `src/mcp/**`.
-- **Evidence:** `2412f56` fixed REST; `97c642d` had to repeat the fix for MCP; `c828d4e` then shared the
-  validator.
+- **Evidence:** during the initial build a fix to one transport had to be repeated on the other; the
+  shared validator in `src/config/product-config.ts` came after (`c828d4e`).
 
 ## 3. Request fields reaching the filesystem or a URL unvalidated
 
 - **Look for:** a request or tool-input field used to build a path, file name or outbound URL without the
   shared pattern check, or a new loader that skips it.
 - **Trigger paths:** `src/server.ts`, `src/mcp/**`, `src/config/**`.
-- **Evidence:** `2412f56`, `97c642d` (security class: details go to the private channel).
+- **Evidence:** fixed once in each transport during the initial build (security class: details go to the
+  private channel).
 
 ## 4. Internal error detail returned to callers
 
 - **Look for:** an error message, stack, downstream status body or file path returned in a REST response or
-  MCP tool result instead of a fixed message. Logging the full error server-side is the convention.
+  MCP tool result instead of a fixed message. How each transport logs and answers today is in
+  `conventions.md`.
 - **Trigger paths:** `src/server.ts`, `src/mcp/**`, `src/retrieval/**`, `src/pii/**`.
-- **Evidence:** `2412f56`, `97c642d` (security class).
+- **Evidence:** fixed once in each transport during the initial build (security class).
 
 ## 5. Rationale or needsReview that hides an override
 

@@ -9,8 +9,13 @@ reviews anything until step 2 has merged.
 
 ## 0. Before the skeleton PR
 
+**Hard precondition for merging anything:** the kit is published at `marcusk639/pr-review-kit` and both
+workflows are re-pinned to the kit's broadcast P0 SHA. The branch's current pin (`90809da`) exists only
+locally and lacks the kit's security-review changes; merging with it would run nothing (the action cannot
+be resolved) or, if pushed, an engine without them.
+
 - [ ] The kit (`marcusk639/pr-review-kit`) exists on GitHub, is public, and contains the commit both workflows
-      pin. **Re-pin first:** the branch pins kit `90809dac179f3b3192ba7ec999d167f7860450cf`, which predates
+      pin. **Re-pin first (see the precondition above):** the branch pins kit `90809dac179f3b3192ba7ec999d167f7860450cf`, which predates
       the kit's security-review changes (`--setting-sources user`, `Skill` and `Read(./.claude-pr/**)`
       denied, the neutralize-PR-head step covering root `AGENTS.md` and `.ignore`/`.rgignore`, one trust SHA,
       SHA-pinned `claude-code-action`/`checkout`/`setup-node`). Replace the SHA in all four `uses:` lines with
@@ -122,5 +127,5 @@ retired.
   the class 2 finding is withheld ("touches a security-relevant file") and its impact-table row is dropped; no
   planted detail string reached the output. Expected kit behaviour, but in a repo this small one security
   finding in a transport file hides every other finding in that file.
-- Known local limitation: the kit's `local` command runs project checks against the current working tree, so P3
-  compared the historical diffs with today's README.
+- P3 reads the README from the PR head with `git show <head>:README.md`, never from the working tree, so a
+  dry run of a historical commit compares with that commit's README.
