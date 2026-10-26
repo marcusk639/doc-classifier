@@ -95,7 +95,7 @@ counterpart.
   - P5: `.review-external/rag-system.sha` holding 40 hex → fact with that SHA; missing or malformed →
     fact "external counterparts unavailable".
   - Robustness: a deleted file entry and a `binary: true` entry produce no throw.
-- [ ] **Step 2:** Run `node --test .claude/pr-review/checks/test/` → FAIL (module missing).
+- [ ] **Step 2:** Run `node --test '.claude/pr-review/checks/test/*.test.mjs'` → FAIL (module missing).
 - [ ] **Step 3:** Implement `doc-classifier.mjs` (Node built-ins only).
 - [ ] **Step 4:** Run the tests → PASS.
 - [ ] **Step 5:** Commit `feat: add doc-classifier project checks`.
