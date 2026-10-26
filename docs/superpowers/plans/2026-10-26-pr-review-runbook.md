@@ -10,16 +10,15 @@ reviews anything until step 2 has merged.
 ## 0. Before the skeleton PR
 
 **Hard precondition for merging anything:** `marcusk639/pr-review-kit` is published on GitHub (public) and
-contains kit commit `74c155b21f81b3154ae5347580760c78ed681810` (P1) on its `main`, which all four kit `uses:`
+contains kit commit `fb07975fc921e046cbc89829c6392c096ee48b12` (P0.1, which includes P1) on its `main`, which all four kit `uses:`
 lines pin. Until then the workflows cannot resolve the action. If the kit has moved on, re-pin all four lines
 to the commit the kit broadcasts, then run `node ~/dev/pr-review-kit/bin/pr-review.mjs validate` and
 `actionlint` again.
 
-**Second precondition:** re-pin all four kit `uses:` lines to the kit's P0.1 release before enabling the
-reviewer. P0.1 runs project checks in an isolated child process (no `GH_TOKEN`, empty cwd, hard kill
-timeout), adds a `parseOnly` helper, limits model writes to the named output files, redacts check notes and
-guards the learn workflow to the default branch. Re-run the project check tests, `validate` and
-`actionlint` after re-pinning.
+P0.1 is the first kit release this repo may be enabled on: project checks run in an isolated child
+process (no `GH_TOKEN`, empty cwd, 20 s kill), the review model can write only its three output files, check
+notes are redacted, and the learn workflow checks out only the default branch. Do not re-pin to an older kit
+commit.
 
 The learning job already runs this repo's project check tests on every proposal (`learning.commands.validate`,
 kit P1); a failing proposal is not opened.
@@ -116,8 +115,13 @@ Disable "PR Review" in the Actions tab to silence it at once; revert the workflo
 comments and draft advisories can be deleted. Rotate `PR_REVIEW_ID_KEY` and revoke the PAT if the repo is
 retired.
 
-## Local verification already done (2026-10-26, kit `be671da`; re-run at `74c155b`)
+## Local verification already done (2026-10-26, kit `be671da`; re-run at `74c155b` and `fb07975`)
 
+- At `fb07975` (P0.1): validate ok, actionlint clean, 13 tests pass. `local` now runs the external checkout:
+  `4ab8ba2`, `b57f6c7` and `c2bbe14` each show `marcusk639/rag-system@main → .pr-review-external/rag-system
+  (6864e5f…)` with the same link types and facts as before, so the isolated checks still read the PR-head
+  README through `readHead`; a bad local path gives `marcusk639/rag-system@main: unavailable`. The publish
+  dry runs render as before with no planted detail in the output.
 - At `74c155b`: validate ok, actionlint clean, tests pass, `4ab8ba2`/`b57f6c7` facts unchanged and every class
   tagged (security, protected, always, light) in facts.
 - Project check tests: 13 pass (`node --test '.pr-review/checks/test/*.test.mjs'`).
