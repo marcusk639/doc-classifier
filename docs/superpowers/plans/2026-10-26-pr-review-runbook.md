@@ -92,7 +92,7 @@ comment).
 4. Hooks and MCP servers do not run (job log of step 3).
 5. Drafts, forks and Dependabot skipped (open the step 3 PR as draft first: no run).
 6. Finishes inside the turn and time caps; observed turns reported (step 6).
-7. Incremental behaviour with `tiers.enabled: false`: empty push → `none`, nothing re-posted, cancelled run
+7. Tier behaviour with `tiers.set: "none-light-full"`: empty push → `none`, docs-only push → `light`, nothing re-posted, cancelled run
    causes no duplicate (step 4).
 8. Planted security finding stays private in summary, ledger, inline and log (replay 4).
 9. Trial target met (step 6).
