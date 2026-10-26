@@ -105,8 +105,7 @@ Settings specific to this repo:
 - Concurrency per PR, cancel in progress (unchanged).
 - `timeout-minutes: 15` (RP uses 30). The repo fits in one read; a run that needs 15 minutes is a sign of
   a loop, not of size. Tune after the first real runs.
-- An extra read-only step checks out `marcusk639/rag-system` at its default branch into
-  `.review-external/rag-system`, sparse, with `persist-credentials: false` and no token (§7.3).
+- rag-system is read through the kit's `externalCheckouts` (§7.3), not a workflow step.
 
 ### 7.2 Knowledge files (`.pr-review/`)
 
@@ -121,10 +120,10 @@ Settings specific to this repo:
 | `config.json`                           | Engine config: classes, tiers, inline cap, checks, trust, learning (kit `docs/design.md` §2.2).                                                                            | **New** (engine config).                                                                     |
 | `learned-lessons.md`                    | Learned lessons that fit no other file. Seeded empty: no corrections in history (brief §8).                                                                                 | **New** (feedback learning).                                                                 |
 | `learned/lessons.json`, `learned/precision.json` | Machine-managed lesson store and 👍/👎 counts per class and link type. Seeded empty.                                                                               | **New.**                                                                                     |
-| `checks/*.mjs`                          | Project checks P1–P5 (§7.6) and their tests.                                                                                                                                | Same role as RP's `contracts*.mjs`.                                                          |
+| `checks/*.mjs`                          | Project checks P1–P4 (§7.6) and their tests.                                                                                                                                | Same role as RP's `contracts*.mjs`.                                                          |
 
 External counterpart paths in the knowledge files are written `rag-system:<path>`, meaning
-`.review-external/rag-system/<path>` in a run. The prefix also keeps the kit's `validate` path check from
+`.pr-review-external/rag-system/<path>` in a run. The prefix also keeps the kit's `validate` path check from
 looking for them in this repo.
 
 On every tier the model reads all knowledge files in full. They total a few hundred lines, so RP's
@@ -136,26 +135,20 @@ written. Entries carry patterns and paths, never a list of current weaknesses.
 ### 7.3 External counterparts (rag-system)
 
 L1, L2 and L10 cannot be checked from this repo alone, and L1 has already broken once (`1c8dd1d`).
-rag-system is public, so the workflow can read it without a credential:
+rag-system is public, so the kit reads it without a credential. `config.json` declares it under
+`externalCheckouts`: repo `marcusk639/rag-system`, ref `main`, dir `rag-system`, sparse to the counterpart
+paths in the map (`apps/api/src/routes/search.ts`, `packages/core/src/types.ts`,
+`packages/core/src/metadata-policy.ts`, `docs/archive/specs/`).
 
-- A sparse checkout of `marcusk639/rag-system` default branch, limited to the counterpart paths in the
-  map (`apps/api/src/routes/search.ts`, `packages/core/src/types.ts`,
-  `packages/core/src/metadata-policy.ts`, `docs/archive/specs/`), into `.review-external/rag-system`.
-- The model reads it like any other path. The facts file records the rag-system SHA used, so a finding
-  cites a fixed version.
-- Trust: the checkout is Marcus's own repo's default branch, chosen by the base-branch workflow, never by
-  the PR. It is data for the model, never executed.
-- If the checkout fails, facts says "external counterparts unavailable" and §5's "unverified (external)"
-  rule applies. The run continues.
+- The kit fetches it token-free after neutralizing the PR head, into `.pr-review-external/rag-system`,
+  removes its `.git`, neutralizes the tree (symlinks and instruction files set aside) and records the
+  resolved SHA under `## External counterparts` in `facts.md`, or `unavailable` on any failure.
+- The model reads it like any other path and cites `rag-system:<path>:<line>` at that SHA.
+- Trust: rag-system's default branch, chosen by the base-branch config, never by the PR. Data for the
+  model, never executed.
+- If it is unavailable, §5's "unverified (external)" rule applies and the run continues.
 - Links that are external **without** a readable counterpart (MCP clients for L9, deployment env for L6)
   are reported as "check consumers" notes at Low or in map maintenance, never as breaks.
-
-The kit has no input for this at the time of writing (§9, E5, raised with the kit). Until it has, the
-consumer workflow does it in its own step before the kit's review action: clear `.review-external/`, check
-out rag-system with a SHA-pinned `actions/checkout`, write the commit SHA to
-`.review-external/rag-system.sha`, delete that checkout's `.git/`. Project check P5 reports the SHA or
-"unavailable" in `facts.md`. If the kit's neutralize step turns out to remove `.review-external/`, this
-moves into the kit.
 
 ### 7.4 Every push, without duplication
 
@@ -172,8 +165,8 @@ several products. Here the whole repo is smaller than an average RP PR, and ther
 | `light` | Increment is only docs, lockfile or `.gitignore`, and touches no link type (L10 counts as one). | 10                  |
 | `full`  | Everything else: review the whole PR diff, deduplicated against the ledger and inline markers.  | 30                  |
 
-Until the kit ships `tiers.set: "none-light-full"`, `config.json` runs `tiers.enabled: false` with only
-the `full` cap set; the `light` row and its `lightFiles` are added with that option (§12, Q2).
+`config.json` sets `tiers.set: "none-light-full"`, `maxTurns` full 30 and light 10, and `lightFiles`
+`docs/**/*.md` and `pnpm-lock.yaml` (README and AGENTS.md are link type `doc-links`, so never light).
 
 **Dropped:** `incremental`, `incremental-new-links` and `base-drift`. Re-reviewing the whole PR on each
 push costs a few turns here and removes a class of "the increment missed context" errors. Base drift
@@ -234,10 +227,10 @@ Project checks (through the engine's check hook, §9 E4), each a hint the model 
 - **P2. Pair edits.** One of `src/server.ts` / `src/mcp/server.ts` changed and the other not (engine
   "duplicate pair" generic, if it exists).
 - **P3. Env-var drift.** `process.env.NAME` (dot, index or destructuring) added or removed in the diff,
-  and whether `NAME` appears in the PR-head `README.md` (read with `git show`, never from the working tree).
+  and whether `NAME` appears in the PR-head `README.md` (read with the kit's `readHead`, never from the working tree).
 - **P4. Config schema without configs.** `src/config/product-config.ts` schema lines changed with no
   change to `config/example.json.example` or `config/test.json`.
-- **P5. External counterpart SHA.** The rag-system SHA read, or "unavailable".
+- **P5 (dropped).** The external SHA is now a kit fact (§7.3).
 
 Not a check: consumer-name scanning. A deterministic denylist would have to commit the consumer names it
 forbids, which breaks the rule it enforces. The model applies class 7 by judgement.
@@ -274,10 +267,12 @@ Adopted from RP §7.7, with these changes:
 
 Adopted from the engine as specified in the rollout brief, configured as:
 
-- **Trusted feedback:** only the repo owner (`marcusk639`). Reactions count; a reply counts only when its
-  first non-quoted line starts with `review:`. Edited comments are ignored. Everyone else, including the
+- **Trusted feedback:** only the repo owner (`feedbackAuthors: ["repository-owner"]`, resolved by the kit at
+  run time; today `marcusk639`). Reactions count; a reply counts only when its
+  first own line (not a quote or code fence) starts with `review:`, e.g. `review: F-1a2b3c 👎 <reason>`. Edited comments are ignored. Everyone else, including the
   bot, is ignored. Public repo: any stranger can react, so this setting is load-bearing.
-- **Seed:** `learned.md` and the stats file empty; no corrections in history (brief §8).
+- **Seed:** `learned/lessons.json` (`{"version":1,"lessons":[],"consumed":[]}`), `learned/precision.json`
+  and `learned-lessons.md` empty; no corrections in history (brief §8).
 - **Cadence:** the engine default. With PR volume near zero, a weekly scheduled learning run will usually
   find nothing; it must then exit without opening or touching a PR.
 - **Merge policy:** no auto-merge. Every lesson arrives in the weekly learning PR for Marcus's review.
@@ -334,6 +329,12 @@ to fail, to confirm the "unverified (external)" path.
 | E13 | Job timeout as consumer-workflow input                                                                                                                                      | §7.1 (15 min)                                                  |
 | E14 | Dry-run publish against a local diff, with the external checkout pointed at a local path                                                                                    | Local verification of P1–P5 and L1 against historical commits. |
 
+**Status at kit `be671da`:** E1, E2 (`tiers.set`), E3, E4 (synchronous checks with `readHead`/`readBase`/
+`listFiles`), E5 (`externalCheckouts`), E6, E7, E8, E10, E11 (`feedbackAuthors: ["repository-owner"]`) and E14
+(`PR_REVIEW_EXTERNAL_LOCAL`) are provided. E9 is handled in this repo's addendum; E12 and E13 live in this
+repo's workflow. Not provided: a hook to run this repo's checks on the learning PR's proposed files (raised
+with the kit).
+
 ## 10. Calls made by Claude (please check)
 
 - Three tiers instead of six; whole-PR review on every non-trivial push.
@@ -356,9 +357,8 @@ to fail, to confirm the "unverified (external)" path.
 ## 12. Decisions at the phase 3 checkpoint
 
 - **Q1 (external counterpart):** yes, read rag-system's default branch (§7.3).
-- **Q2 (tiers):** three tiers, `none`/`light`/`full` (§7.4). The kit at the time of writing offers either
-  its six tiers or `full`/`none` only; until it adds a `light` option this repo runs `tiers.enabled: false`,
-  so a docs-only push gets a full run.
+- **Q2 (tiers):** three tiers, `none`/`light`/`full`, through the kit's `tiers.set: "none-light-full"`
+  (§7.4).
 - **Q3 (class 9):** fail-conservative regressions are security findings: public pointer plus the private
   channel, as for every other security class, because the repo is public.
 - **Q4 (auto-merge):** none.

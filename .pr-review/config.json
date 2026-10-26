@@ -77,11 +77,29 @@
     }
   ],
   "tiers": {
-    "enabled": false,
+    "set": "none-light-full",
     "maxTurns": {
-      "full": 30
+      "full": 30,
+      "light": 10
     }
   },
+  "lightFiles": [
+    "docs/**/*.md",
+    "**/pnpm-lock.yaml"
+  ],
+  "externalCheckouts": [
+    {
+      "repo": "marcusk639/rag-system",
+      "ref": "main",
+      "dir": "rag-system",
+      "sparse": [
+        "apps/api/src/routes/search.ts",
+        "packages/core/src/types.ts",
+        "packages/core/src/metadata-policy.ts",
+        "docs/archive/specs/"
+      ]
+    }
+  ],
   "inline": {
     "max": 5,
     "severities": [
@@ -107,7 +125,7 @@
       "OWNER"
     ],
     "feedbackAuthors": [
-      "marcusk639"
+      "repository-owner"
     ]
   },
   "learning": {

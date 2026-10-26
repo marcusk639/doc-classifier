@@ -4,8 +4,8 @@
 `routing.json` entry. The map is guidance: confirm every link by reading both sides.
 
 A path written `rag-system:<path>` is in the rag-system repository. In a review run it is at
-`.review-external/rag-system/<path>`, checked out from rag-system's default branch at the SHA `facts.md`
-reports under `external-counterpart`. If facts says it is unavailable, report the link as
+`.pr-review-external/rag-system/<path>`, checked out from rag-system's default branch at the SHA listed under
+`## External counterparts` in `facts.md`. If that line says `unavailable`, report the link as
 "unverified (external)", at Medium at most.
 
 ## rag-search

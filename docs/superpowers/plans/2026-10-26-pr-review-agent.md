@@ -7,6 +7,9 @@
 **Goal:** Give doc-classifier an advisory, repo-aware PR reviewer that runs the shared `pr-review-kit` engine
 with this repo's own knowledge, checks and learned memory.
 
+**Status:** executed; amended at kit `be671da` (knowledge moved to `.pr-review/`, P5 and the consumer
+external-checkout step replaced by the kit's `externalCheckouts`, `tiers.set: "none-light-full"`).
+
 **Architecture:** The kit's `review` and `publish` composite actions, pinned by full SHA, run from
 `.github/workflows/pr-review.yml`; the kit's `learn` and `propose` actions run weekly from
 `.github/workflows/pr-review-learn.yml`. Everything project-specific lives under `.pr-review/` and is

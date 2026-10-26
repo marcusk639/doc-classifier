@@ -1,7 +1,8 @@
 # Repo-aware, advisory PR review (pr-review-kit). Comments only: never approves,
 # never blocks, never a required check. The kit is pinned to one full commit
 # SHA in every `uses:` below; a tag or branch would let the engine change under
-# the pin. Design: docs/superpowers/specs/2026-10-26-pr-review-agent-design.md.
+# the pin. rag-system is read through .pr-review/config.json externalCheckouts.
+# Design: docs/superpowers/specs/2026-10-26-pr-review-agent-design.md.
 name: PR Review
 
 on:
@@ -29,53 +30,25 @@ jobs:
       id-token: write
     steps:
       - name: Checkout PR head
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
 
-      # External counterparts: rag-system's default branch, read-only, as data
-      # for the model (contract-map.md, "rag-system:" paths). The PR head could
-      # ship its own .review-external/; never reuse it. A failed checkout leaves
-      # no SHA file, and the external-counterpart fact then says "unavailable".
-      - name: Clear external counterpart path
-        run: rm -rf .review-external
-
-      - name: Checkout rag-system (external counterparts)
-        id: external
-        continue-on-error: true
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          repository: marcusk639/rag-system
-          path: .review-external/rag-system
-          fetch-depth: 1
-          persist-credentials: false
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            apps/api/src/routes/search.ts
-            packages/core/src/types.ts
-            packages/core/src/metadata-policy.ts
-            docs/archive/specs/
-
-      - name: Record external counterpart SHA
-        if: steps.external.outcome == 'success'
-        run: |
-          git -C .review-external/rag-system rev-parse HEAD > .review-external/rag-system.sha
-          rm -rf .review-external/rag-system/.git
-
       # Facts, then the sandboxed model. Gets the Claude token and nothing else.
       - name: Review
         id: review
-        uses: marcusk639/pr-review-kit/actions/review@90809dac179f3b3192ba7ec999d167f7860450cf
+        uses: marcusk639/pr-review-kit/actions/review@be671dacb924f94e455ab2448bfa97026beee3d8
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
       # Model-free; the only step with the id key and the advisory token.
       - name: Publish
         if: always()
-        uses: marcusk639/pr-review-kit/actions/publish@90809dac179f3b3192ba7ec999d167f7860450cf
+        uses: marcusk639/pr-review-kit/actions/publish@be671dacb924f94e455ab2448bfa97026beee3d8
         with:
+          trust_sha: ${{ steps.review.outputs.trust_sha }}
           action_outcome: ${{ steps.review.outputs.outcome }}
           execution_file: ${{ steps.review.outputs.execution_file }}
           id_key: ${{ secrets.PR_REVIEW_ID_KEY }}

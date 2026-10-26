@@ -1,11 +1,8 @@
 // doc-classifier project checks (pr-review-kit extension point). They run in
 // the facts step from the base checkout and return hints for the model to
-// confirm, never verdicts. Node built-ins only. They never read PR-head files
-// through the filesystem: a PR could plant a symlink or a FIFO there. PR-head
-// content comes from `git show <head>:<path>`; the external SHA file is
-// lstat-checked and size-capped.
-import { lstatSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+// confirm, never verdicts. Synchronous, Node built-ins only. PR-head files are
+// read only through the engine's readHead (git objects, never a symlink),
+// never from the working tree.
 
 const TS = /\.(?:ts|mts|cts)$/;
 const COMMENT = /^\s*(?:\/\/|\/\*|\*)/;
@@ -16,31 +13,17 @@ const ENV_INDEX = /\bprocess\.env\[\s*["']([A-Z][A-Z0-9_]*)["']\s*\]/g;
 const ENV_DESTRUCTURE = /\{([^}]*)\}\s*=\s*process\.env\b/g;
 const STANDARD_ENV = new Set(['NODE_ENV']);
 const SCHEMA_KEY = /^\s*[A-Za-z_]\w*\s*:\s*(?:z\b|[A-Z]\w*Schema\b)/;
-const SHA_RE = /^[0-9a-f]{40}$/;
-const MAX_SHA_FILE = 256;
 
 const TRANSPORTS = ['src/server.ts', 'src/mcp/server.ts'];
 const CONFIG_FILES = ['config/test.json', 'config/example.json.example'];
 const SCHEMA_FILE = 'src/config/product-config.ts';
-const EXTERNAL_SHA = '.review-external/rag-system.sha';
 
 const textFiles = (files) => files.filter((f) => !f.binary);
 
-// A regular file no larger than max, or null; never follows a symlink.
-function readSmallFile(path, max) {
-  try {
-    const st = lstatSync(path);
-    if (!st.isFile() || st.size > max) return null;
-    return readFileSync(path, 'utf8');
-  } catch {
-    return null;
-  }
-}
-
 function headFile(ctx, path) {
-  if (typeof ctx.git !== 'function' || !ctx.headSha) return null;
+  if (typeof ctx.readHead !== 'function') return null;
   try {
-    return ctx.git(['show', `${ctx.headSha}:${path}`]);
+    return ctx.readHead(path);
   } catch {
     return null;
   }
@@ -107,20 +90,9 @@ function configSchema({ files }) {
   return [{ file: SCHEMA_FILE, ...(line ? { line } : {}), note: `config schema keys changed but ${CONFIG_FILES.join(' and ')} did not; check them and the inline configs in tests` }];
 }
 
-// P5: which rag-system commit the external counterparts come from.
-function externalCounterpart({ repoRoot }) {
-  const sha = (readSmallFile(join(repoRoot, EXTERNAL_SHA), MAX_SHA_FILE) ?? '').trim();
-  return [
-    SHA_RE.test(sha)
-      ? { file: EXTERNAL_SHA, note: `rag-system counterparts at .review-external/rag-system, commit ${sha}` }
-      : { file: EXTERNAL_SHA, note: 'external counterparts unavailable: report rag-system links as unverified (external)' },
-  ];
-}
-
 export default [
   { name: 'nodenext-ext', run: nodenextExt },
   { name: 'transport-pair', run: transportPair },
   { name: 'env-var-docs', run: envVarDocs },
   { name: 'config-schema', run: configSchema },
-  { name: 'external-counterpart', run: externalCounterpart },
 ];

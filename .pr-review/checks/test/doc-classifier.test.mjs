@@ -1,14 +1,13 @@
 // Tests for the doc-classifier project checks. Run: node --test '.pr-review/checks/test/*.test.mjs'
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import checks from '../doc-classifier.mjs';
 
 const byName = Object.fromEntries(checks.map((c) => [c.name, c]));
-const SHA = 'a'.repeat(40);
-const HEAD = 'b'.repeat(40);
+
 
 function entry(file, { added = [], removed = [], status = 'M', binary = false } = {}) {
   return {
@@ -30,18 +29,13 @@ function root(files = {}) {
   return dir;
 }
 
-// Stands in for the engine's git(args): `show <head>:<path>` returns the PR-head file or throws.
-const gitWith = (headFiles = {}) => (args) => {
-  const [cmd, spec] = args;
-  const [sha, path] = String(spec).split(':');
-  if (cmd !== 'show' || sha !== HEAD || !(path in headFiles)) throw new Error('fatal: path not in head');
-  return headFiles[path];
-};
+// Stands in for the engine's readHead(path): PR-head file text, or null.
+const readHeadWith = (headFiles = {}) => (path) => (path in headFiles ? headFiles[path] : null);
 
-const run = (name, files, { repoRoot = root(), headFiles = {} } = {}) => byName[name].run({ files, repoRoot, headSha: HEAD, git: gitWith(headFiles) });
+const run = (name, files, { repoRoot = root(), headFiles = {} } = {}) => byName[name].run({ files, repoRoot, readHead: readHeadWith(headFiles) });
 
-test('exports the five checks with valid names', () => {
-  assert.deepEqual(Object.keys(byName).sort(), ['config-schema', 'env-var-docs', 'external-counterpart', 'nodenext-ext', 'transport-pair']);
+test('exports the four checks with valid names', () => {
+  assert.deepEqual(Object.keys(byName).sort(), ['config-schema', 'env-var-docs', 'nodenext-ext', 'transport-pair']);
 });
 
 test('nodenext-ext: flags relative imports without .js in a .ts file', () => {
@@ -123,26 +117,10 @@ test('config-schema: no fact when a committed config also changed, or no key lin
   assert.deepEqual(run('config-schema', [entry('src/types.ts', { added: ['  maxTokens: z.number(),'] })]), []);
 });
 
-test('external-counterpart: reports the recorded SHA', () => {
-  const facts = run('external-counterpart', [], { repoRoot: root({ '.review-external/rag-system.sha': `${SHA}\n` }) });
-  assert.equal(facts.length, 1);
-  assert.match(facts[0].note, new RegExp(SHA));
-});
-
-test('external-counterpart: missing, malformed, oversized or symlinked SHA file means unavailable', () => {
-  assert.match(run('external-counterpart', [])[0].note, /unavailable/);
-  assert.match(run('external-counterpart', [], { repoRoot: root({ '.review-external/rag-system.sha': 'not-a-sha' }) })[0].note, /unavailable/);
-  assert.match(run('external-counterpart', [], { repoRoot: root({ '.review-external/rag-system.sha': `${SHA}\n${' '.repeat(400)}` }) })[0].note, /unavailable/);
-  const linked = root({ 'target.txt': `${SHA}\n` });
-  mkdirSync(join(linked, '.review-external'));
-  symlinkSync(join(linked, 'target.txt'), join(linked, '.review-external/rag-system.sha'));
-  assert.match(run('external-counterpart', [], { repoRoot: linked })[0].note, /unavailable/);
-});
-
-test('every check tolerates deleted and binary entries and a missing git helper', () => {
+test('every check tolerates deleted and binary entries and a missing readHead helper', () => {
   const files = [entry('src/server.ts', { status: 'D', removed: ['import x from "./y";', 'process.env.GONE'] }), entry('docs/a.png', { binary: true })];
   for (const c of checks) {
-    assert.doesNotThrow(() => c.run({ files, repoRoot: root(), headSha: HEAD, git: gitWith() }), c.name);
-    assert.doesNotThrow(() => c.run({ files, repoRoot: root() }), `${c.name} without git`);
+    assert.doesNotThrow(() => c.run({ files, repoRoot: root(), readHead: readHeadWith() }), c.name);
+    assert.doesNotThrow(() => c.run({ files, repoRoot: root() }), `${c.name} without readHead`);
   }
 });

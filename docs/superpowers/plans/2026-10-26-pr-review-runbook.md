@@ -9,19 +9,11 @@ reviews anything until step 2 has merged.
 
 ## 0. Before the skeleton PR
 
-**Hard precondition for merging anything:** the kit is published at `marcusk639/pr-review-kit` and both
-workflows are re-pinned to the kit's broadcast P0 SHA. The branch's current pin (`90809da`) exists only
-locally and lacks the kit's security-review changes; merging with it would run nothing (the action cannot
-be resolved) or, if pushed, an engine without them.
-
-- [ ] The kit (`marcusk639/pr-review-kit`) exists on GitHub, is public, and contains the commit both workflows
-      pin. **Re-pin first (see the precondition above):** the branch pins kit `90809dac179f3b3192ba7ec999d167f7860450cf`, which predates
-      the kit's security-review changes (`--setting-sources user`, `Skill` and `Read(./.claude-pr/**)`
-      denied, the neutralize-PR-head step covering root `AGENTS.md` and `.ignore`/`.rgignore`, one trust SHA,
-      SHA-pinned `claude-code-action`/`checkout`/`setup-node`). Replace the SHA in all four `uses:` lines with
-      the kit's final commit, then run `node <kit>/bin/pr-review.mjs validate` and `actionlint` again.
-- [ ] Confirm the neutralize step leaves `.review-external/` alone (or runs before this repo's external
-      checkout step). If the kit moves external checkouts into an action input, switch to it.
+**Hard precondition for merging anything:** `marcusk639/pr-review-kit` is published on GitHub (public) and
+contains kit commit `be671dacb924f94e455ab2448bfa97026beee3d8` on its `main`, which all four kit `uses:`
+lines pin. Until then the workflows cannot resolve the action. If the kit has moved on, re-pin all four lines
+to the commit the kit broadcasts, then run `node ~/dev/pr-review-kit/bin/pr-review.mjs validate` and
+`actionlint` again.
 
 ## 1. Skeleton PR
 
@@ -46,7 +38,9 @@ be resolved) or, if pushed, an engine without them.
 
 - [ ] Throwaway branch `test/pr-review-online` with a harmless README edit; open as ready (not draft).
 - [ ] Check: a summary comment posted by `github-actions[bot]`; the job summary's status line; zero
-      `permission_denied` entries; the external-counterpart fact shows a rag-system SHA; tier is `full`.
+      `permission_denied` entries; `## External counterparts` in the run's facts shows a rag-system SHA (job
+      log line `externals: 1 of 1 checked out`); tier is `full`. Then push a second commit touching only
+      `docs/`: tier `light`.
 - [ ] Prove the advisory channel on one harmless planted test finding before any security replay: label the
       branch content "PLANTED TEST", confirm a draft advisory appears and the public summary shows only
       severity and area. Delete the advisory afterwards.
@@ -110,22 +104,30 @@ Disable "PR Review" in the Actions tab to silence it at once; revert the workflo
 comments and draft advisories can be deleted. Rotate `PR_REVIEW_ID_KEY` and revoke the PAT if the repo is
 retired.
 
-## Local verification already done (2026-10-26)
+## Local verification already done (2026-10-26, kit `be671da`)
 
-- Project check tests: 15 pass (`node --test '.pr-review/checks/test/*.test.mjs'`).
-- `node ~/dev/pr-review-kit/bin/pr-review.mjs validate`: ok. `actionlint`: clean.
-- Facts dry runs at kit `90809da` with a stand-in `.review-external/rag-system.sha`:
+- Project check tests: 13 pass (`node --test '.pr-review/checks/test/*.test.mjs'`).
+- `node ~/dev/pr-review-kit/bin/pr-review.mjs validate`: ok. `actionlint`: clean on both workflows.
+- Facts dry runs (`local --base <sha>^ --head <sha> --project .pr-review`):
   - `4ab8ba2` (introduced the class 1 bug fixed in `1c8dd1d`): link types `rag-search`, `env-vars`,
-    `module-resolution`; classes include 1 and 10; the rag-search map entry points at the rag-system result
-    type, which carries `chunk.id`, so the knowledge would have pointed at the other side. P3 flagged
-    `RAG_API_URL` as undocumented.
-  - `b57f6c7` (MCP tool added after the REST-only fix, the class 2 history): `transport-pair` fired; link types
-    `transport-parity`, `mcp-surface`.
-  - `c2bbe14` (PR #1): link type `product-config` only, tier `full` (no `light` tier yet).
-- Publish dry run on `b57f6c7` with hand-written findings: a lone class 2 High renders with handle and one
-  inline comment. With a class 3 security finding in the same file, the security finding renders as a pointer,
-  the class 2 finding is withheld ("touches a security-relevant file") and its impact-table row is dropped; no
-  planted detail string reached the output. Expected kit behaviour, but in a repo this small one security
-  finding in a transport file hides every other finding in that file.
-- P3 reads the README from the PR head with `git show <head>:README.md`, never from the working tree, so a
-  dry run of a historical commit compares with that commit's README.
+    `module-resolution`; the rag-search map entry points at rag-system's result type, which carries
+    `chunk.id`, so the knowledge points at the other side of the bug. P3 flagged `RAG_API_URL` as
+    undocumented in that commit's README.
+  - `b57f6c7` (MCP tool added after the REST-only fix, the class 2 history): `transport-pair` fired; link
+    types `transport-parity`, `mcp-surface`, `module-resolution`, `env-vars`.
+  - `c2bbe14` (PR #1): link type `product-config` only; no facts.
+  - `305902b` (consumer-neutrality cleanup, class 7): `doc-links` plus seven code link types; `transport-pair`
+    fired (only the MCP description changed), a hint the model is expected to dismiss.
+- External counterparts: the kit's `local` command does not run them, so `engine/externals.mjs` was run
+  directly against this config: token-free sparse fetch from GitHub gave
+  `marcusk639/rag-system@main → .pr-review-external/rag-system (aec6aef…)` with the four counterpart paths
+  and no `.git`; `PR_REVIEW_EXTERNAL_LOCAL` gave "(local copy)"; a nonexistent repo gave `unavailable` and
+  left nothing behind.
+- Publish dry run on `b57f6c7` with hand-written findings: a lone class 2 High renders with handle `F-8fab4e`
+  and one inline comment with its fingerprint; the footer states the `review:` rule. With a class 3 security
+  finding in the same file, the security finding renders as a pointer, the class 2 finding is withheld
+  ("touches a security-relevant file"); no planted detail string reached the output. Expected kit behaviour,
+  noted in the kit's design as a trial issue: in a repo this small one security finding in a transport file
+  hides every other finding in that file.
+- Not verifiable locally: the `light` tier (needs prior state from a real run), posting, advisories, the
+  learning loop against real reactions.
