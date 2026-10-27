@@ -28,6 +28,23 @@ validated instead of dropped) and its Mediums. Do not re-pin to anything older.
 The learning job already runs this repo's project check tests on every proposal (`learning.commands.validate`,
 kit P1); a failing proposal is not opened.
 
+## Accepted gap: the PR runs its own workflow file
+
+The review workflow triggers on `pull_request`, so GitHub runs the workflow file **from the PR's head**. Anyone
+who can push a branch to this repository can edit `.github/workflows/pr-review.yml` on that branch and have
+the edited job read `CLAUDE_CODE_OAUTH_TOKEN`, `PR_REVIEW_ID_KEY`, `SECURITY_ADVISORY_TOKEN` and
+`PR_REVIEW_REDACT_TERMS`. Forks never receive secrets, and the same-repo guard skips them.
+
+- **Why it is accepted:** Marcus is the only account with write access (the reviewer's write-collaborator
+  fact reports any other writer), and the threat model is an accidental edit by his own agents, not an
+  adversarial PR. `pull_request_target` would close the gap but would hand secrets to every PR event; the kit
+  rejects it.
+- **What still holds:** the reviewer flags any edit to its workflow or its kit pin as a High self-edit
+  finding on that PR, and knowledge, checks and publish come from the base SHA, not the PR.
+- **What to do:** if a PR you did not expect touches `.github/workflows/`, or a collaborator is ever added,
+  rotate all four secrets (re-issue the OAuth token, regenerate `PR_REVIEW_ID_KEY`, revoke and recreate the
+  advisory PAT, replace the redact terms) and review that PR's Actions logs.
+
 ## 1. Skeleton PR
 
 - [ ] Push `chore/pr-review` and open a PR to `main` (title `ci: add advisory PR reviewer`). Merge commit, as

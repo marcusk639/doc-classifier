@@ -10,6 +10,9 @@ name: PR Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
+    # Stacked PRs: review only PRs into main, so the trust SHA is always a
+    # commit of the default branch.
+    branches: [main]
 
 concurrency:
   group: pr-review-${{ github.event.pull_request.number }}
@@ -17,9 +20,11 @@ concurrency:
 
 jobs:
   review:
-    # Skip drafts, forks (their runs get no secrets) and Dependabot (likewise).
+    # Skip drafts, forks (their runs get no secrets), Dependabot (likewise) and
+    # PRs not based on main.
     if: >-
       ${{ !github.event.pull_request.draft
+      && github.event.pull_request.base.ref == 'main'
       && github.actor != 'dependabot[bot]'
       && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
