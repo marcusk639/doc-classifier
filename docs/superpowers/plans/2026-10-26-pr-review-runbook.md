@@ -10,7 +10,7 @@ reviews anything until step 2 has merged.
 ## 0. Before the skeleton PR
 
 **Hard precondition for merging anything:** `marcusk639/pr-review-kit` is published on GitHub (public) and
-contains kit commit `0d2693d351bb87fe576944f4aad1a7699c3d3964` (the final pin shared by all consumers; includes P0.2, P0.1 and P1) on its `main`, which all four kit `uses:`
+contains kit commit `0c9fafacf82a2c2a5d23cf1e2bec7766dbdd5b80` (the final pin shared by all consumers; includes P0.2, P0.1 and P1) on its `main`, which all four kit `uses:`
 lines pin. Until then the workflows cannot resolve the action. If the kit has moved on, re-pin all four lines
 to the commit the kit broadcasts, then run `node ~/dev/pr-review-kit/bin/pr-review.mjs validate` and
 `actionlint` again.
