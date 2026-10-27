@@ -1,0 +1,14 @@
+[
+  { "linkType": "rag-search", "paths": ["src/retrieval/**"], "counterparts": ["rag-system:apps/api/src/routes/search.ts", "rag-system:packages/core/src/types.ts", "rag-system:packages/core/src/metadata-policy.ts", "src/classification/classify.ts"], "classes": [1, 4, 10] },
+  { "linkType": "output-contract", "paths": ["src/types.ts"], "counterparts": ["rag-system:docs/archive/specs/2026-07-11-generic-document-classification-engine-design.md", "src/server.ts", "src/mcp/server.ts", "src/classification/orchestrator.ts"], "classes": [1, 9] },
+  { "linkType": "presidio", "paths": ["src/pii/**", "docker-compose.yml"], "counterparts": ["docker-compose.yml", "src/pii/presidio-client.ts", "src/classification/orchestrator.ts"], "classes": [8, 9, 10] },
+  { "linkType": "transport-parity", "paths": ["src/server.ts", "src/mcp/**"], "counterparts": ["src/server.ts", "src/mcp/server.ts", "src/config/product-config.ts"], "classes": [2, 3, 4, 8] },
+  { "linkType": "product-config", "paths": ["src/config/**", "config/**", ".gitignore"], "counterparts": ["config/example.json.example", "config/test.json", ".gitignore", "README.md", "src/**/*.test.ts"], "classes": [3, 6] },
+  { "linkType": "env-vars", "paths": ["src/server.ts", "src/mcp/server.ts", "src/retrieval/rag-client.ts", "src/pii/presidio-client.ts", "eval/run-eval.ts"], "counterparts": ["README.md"], "classes": [6, 11] },
+  { "linkType": "tier-order", "paths": ["src/types.ts", "src/classification/**", "eval/eval-stats.ts", "eval/run-eval.ts"], "counterparts": ["src/types.ts", "src/classification/orchestrator.ts", "src/classification/confidence-gate.ts", "eval/eval-stats.ts", "eval/golden-set.json"], "classes": [5, 9, 10] },
+  { "linkType": "golden-set", "paths": ["eval/**"], "counterparts": ["config/test.json", "eval/golden-set.json", "src/config/product-config.ts"], "classes": [6, 8, 9] },
+  { "linkType": "mcp-surface", "paths": ["src/mcp/**"], "counterparts": ["README.md"], "classes": [2, 11] },
+  { "linkType": "doc-links", "paths": ["README.md", "AGENTS.md", "docs/**"], "counterparts": ["rag-system:docs/archive/specs/2026-07-11-generic-document-classification-engine-design.md", "src/**"], "classes": [7, 11] },
+  { "linkType": "module-resolution", "paths": ["src/**/*.ts", "eval/**/*.ts", "tsconfig.json"], "counterparts": ["tsconfig.json", "AGENTS.md"], "classes": [12] },
+  { "linkType": "review-config", "paths": [".pr-review/**", ".github/workflows/pr-review*.yml"], "counterparts": [], "classes": [8] }
+]
